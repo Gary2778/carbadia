@@ -41,13 +41,22 @@ async function main() {
   );
   const [alice, bob, carol, dave] = users;
 
+  console.log("创建做市机器人…");
+  const bots = await Promise.all(
+    ["mm1", "mm2", "mm3"].map((n) =>
+      prisma.user.create({
+        data: { email: `${n}@carbonex.bot`, name: `做市商 ${n.toUpperCase()}`, passwordHash: pw, isBot: true, cashBalance: 50_000_000 },
+      })
+    )
+  );
+
   console.log("创建标的…");
   const assets = await Promise.all(
     ASSETS.map((a) =>
       prisma.asset.create({
         data: {
           symbol: a.symbol, name: a.name, standard: a.standard, projectType: a.projectType,
-          vintage: a.vintage, country: a.country, registry: a.registry, description: a.desc, lastPrice: a.mid,
+          vintage: a.vintage, country: a.country, registry: a.registry, description: a.desc, lastPrice: a.mid, anchorPrice: a.mid,
         },
       })
     )
@@ -66,6 +75,7 @@ async function main() {
     await grant(alice.id, asset.id, 3000);
     await grant(bob.id, asset.id, 1500);
     await grant(carol.id, asset.id, 400);
+    for (const b of bots) await grant(b.id, asset.id, 1_000_000);
   }
 
   // 挂单助手(维护冻结一致)

@@ -17,6 +17,7 @@ model User {
   name         String
   passwordHash String
   role         String   @default("USER") // USER | ADMIN
+  isBot        Boolean  @default(false)    // 做市机器人账户
   cashBalance  Float    @default(0)       // 可用现金(元)
   lockedCash   Float    @default(0)       // 挂单冻结现金
   createdAt    DateTime @default(now())
@@ -41,6 +42,7 @@ model Asset {
   registry    String                    // 登记簿
   description String   @default("")
   lastPrice   Float?                    // 最近成交价
+  anchorPrice Float?                    // 机器人均值回归锚定价
   createdAt   DateTime @default(now())
 
   holdings    Holding[]
