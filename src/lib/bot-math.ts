@@ -6,11 +6,10 @@ export const round2 = (x: number) => Math.round((x + Number.EPSILON) * 100) / 10
 /** 公允价: 三角分布噪声(±0.4%) + 2% 力度向 anchor 均值回归 */
 export function nextFair(last: number, anchor: number, rng: Rng): number {
   const noise = (rng() + rng() - 1) * 0.004;
-  const reversion = (0.02 * (anchor - last)) / last;
-  return Math.max(0.01, round2(last * (1 + noise + reversion)));
+  return Math.max(0.01, round2(last * (1 + noise) + 0.02 * (anchor - last)));
 }
 
-/** 两侧各 5 档报价: 偏移 0.1%~1.2%, 数量 10~200 吨 */
+/** 两侧各 5 档报价: 偏移 0.1%~1.06%, 数量 10~200 吨 */
 export function buildQuoteLevels(fair: number, rng: Rng) {
   const mk = (dir: 1 | -1) =>
     Array.from({ length: 5 }, (_, i) => {

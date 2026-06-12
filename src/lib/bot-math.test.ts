@@ -18,6 +18,9 @@ describe("nextFair", () => {
     expect(v).toBeGreaterThan(0);
     expect(v).toBe(Math.round(v * 100) / 100);
   });
+  it("触发最低价下限 0.01", () => {
+    expect(nextFair(0.01, 0.01, () => 0)).toBe(0.01);
+  });
 });
 
 describe("buildQuoteLevels", () => {
@@ -45,6 +48,6 @@ describe("shouldTake / takeQty", () => {
   });
   it("吃单量在 10~80 吨", () => {
     expect(takeQty(() => 0)).toBe(10);
-    expect(takeQty(() => 0.9999)).toBeLessThanOrEqual(80);
+    expect(takeQty(() => 0.9999)).toBe(80);
   });
 });
