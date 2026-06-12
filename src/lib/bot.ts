@@ -63,7 +63,7 @@ async function quoteAsset(asset: Asset, bots: User[]) {
   const keep: typeof open = [];
   for (const o of open) {
     if (o.price != null && Math.abs(o.price - fair) / fair > MAX_DRIFT) {
-      await cancelOrder(o.userId, o.id).catch(() => {});
+      await cancelOrder(o.userId, o.id).catch((e) => console.error(`[bot] ${asset.symbol} 操作失败`, e instanceof Error ? e.message : e));
     } else {
       keep.push(o);
     }
@@ -74,17 +74,17 @@ async function quoteAsset(asset: Asset, bots: User[]) {
   const askCount = keep.filter((o) => o.side === "SELL").length;
   const { bids, asks } = buildQuoteLevels(fair, rng);
   for (const lvl of bids.slice(0, Math.max(0, 5 - bidCount))) {
-    await placeOrder({ userId: pick().id, assetId: asset.id, side: "BUY", type: "LIMIT", price: lvl.price, quantity: lvl.quantity }).catch(() => {});
+    await placeOrder({ userId: pick().id, assetId: asset.id, side: "BUY", type: "LIMIT", price: lvl.price, quantity: lvl.quantity }).catch((e) => console.error(`[bot] ${asset.symbol} 操作失败`, e instanceof Error ? e.message : e));
   }
   for (const lvl of asks.slice(0, Math.max(0, 5 - askCount))) {
-    await placeOrder({ userId: pick().id, assetId: asset.id, side: "SELL", type: "LIMIT", price: lvl.price, quantity: lvl.quantity }).catch(() => {});
+    await placeOrder({ userId: pick().id, assetId: asset.id, side: "SELL", type: "LIMIT", price: lvl.price, quantity: lvl.quantity }).catch((e) => console.error(`[bot] ${asset.symbol} 操作失败`, e instanceof Error ? e.message : e));
   }
 
   // 3) 概率吃单(穿越价差的限价单, 打印成交)
   if (shouldTake(rng)) {
     const side = Math.random() < 0.5 ? "BUY" : "SELL";
     const price = round2(side === "BUY" ? fair * 1.015 : fair * 0.985);
-    await placeOrder({ userId: pick().id, assetId: asset.id, side, type: "LIMIT", price, quantity: takeQty(rng) }).catch(() => {});
+    await placeOrder({ userId: pick().id, assetId: asset.id, side, type: "LIMIT", price, quantity: takeQty(rng) }).catch((e) => console.error(`[bot] ${asset.symbol} 操作失败`, e instanceof Error ? e.message : e));
   }
 
   // 4) 自动补给(演示盘不破产)
