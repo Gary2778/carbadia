@@ -22,6 +22,7 @@ export function FlashCell({
       const t = setTimeout(() => setFlash(null), 600);
       return () => clearTimeout(t);
     }
+    if (value == null) setFlash(null);
   }, [value]);
 
   return (
