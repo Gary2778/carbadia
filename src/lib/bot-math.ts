@@ -1,0 +1,30 @@
+// 做市机器人定价数学 — 全部纯函数, 随机性经 rng 注入以便测试
+export type Rng = () => number;
+
+export const round2 = (x: number) => Math.round((x + Number.EPSILON) * 100) / 100;
+
+/** 公允价: 三角分布噪声(±0.4%) + 2% 力度向 anchor 均值回归 */
+export function nextFair(last: number, anchor: number, rng: Rng): number {
+  const noise = (rng() + rng() - 1) * 0.004;
+  const reversion = (0.02 * (anchor - last)) / last;
+  return Math.max(0.01, round2(last * (1 + noise + reversion)));
+}
+
+/** 两侧各 5 档报价: 偏移 0.1%~1.2%, 数量 10~200 吨 */
+export function buildQuoteLevels(fair: number, rng: Rng) {
+  const mk = (dir: 1 | -1) =>
+    Array.from({ length: 5 }, (_, i) => {
+      const pct = 0.001 + i * 0.0022 + rng() * 0.0008;
+      return {
+        price: Math.max(0.01, round2(fair * (1 + dir * pct))),
+        quantity: 10 + Math.floor(rng() * 191),
+      };
+    });
+  return { asks: mk(1), bids: mk(-1) };
+}
+
+/** 30% 概率发吃单 */
+export const shouldTake = (rng: Rng) => rng() < 0.3;
+
+/** 吃单量 10~80 吨 */
+export const takeQty = (rng: Rng) => 10 + Math.floor(rng() * 71);
