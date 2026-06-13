@@ -3,12 +3,16 @@
 import { createContext, useCallback, useContext, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useReducedMotion } from "motion/react";
+import { useTheme } from "@/lib/theme";
 
 export type Pt = { x: number; y: number };
 type Origin = { points: Pt[]; click: Pt };
 
 const GREEN = "#0a8a52";
 const GLOW = "#16d97f";
+// 深色模式:覆盖层由不同深浅的紫色方块拼成(由深到浅)
+const PURPLES = ["#2c1a52", "#3b2470", "#4c2f93", "#5d3bb5", "#6f49d6", "#8159ee", "#9a72ff"];
+const PURPLE_GLOW = "#b794ff";
 const TARGET = "/rating";
 
 type TransitionApi = { enter: (o: Origin) => void };
@@ -33,6 +37,9 @@ type Phase = "idle" | "rush" | "cover" | "reveal";
 export function PixelTransitionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const reduced = useReducedMotion();
+  const { theme } = useTheme();
+  const darkRef = useRef(false);
+  darkRef.current = theme === "dark";
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const raf = useRef(0);
   const frameRef = useRef<() => void>(() => {});
@@ -42,7 +49,7 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
     coverT0: 0,
     pendingReveal: false,
     parts: [] as { x: number; y: number; vx: number; vy: number; sz: number }[],
-    cells: [] as { x: number; y: number; cell: number; delay: number }[],
+    cells: [] as { x: number; y: number; cell: number; delay: number; color: string }[],
     W: 0,
     H: 0,
   });
@@ -72,13 +79,21 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
 
   const buildCells = () => {
     const { W, H } = st.current;
+    const dark = darkRef.current;
     const cell = 24;
     const cols = Math.ceil(W / cell);
     const rows = Math.ceil(H / cell);
     const cells: typeof st.current.cells = [];
     for (let y = 0; y < rows; y++)
       for (let x = 0; x < cols; x++)
-        cells.push({ x: x * cell, y: y * cell, cell, delay: (y / rows) * 0.5 + Math.random() * 0.18 });
+        cells.push({
+          x: x * cell,
+          y: y * cell,
+          cell,
+          delay: (y / rows) * 0.5 + Math.random() * 0.18,
+          // 深色:每格随机一档紫色 → 不同深浅的紫色方块拼出覆盖层;浅色保持原绿
+          color: dark ? PURPLES[(Math.random() * PURPLES.length) | 0] : GREEN,
+        });
     st.current.cells = cells;
   };
 
@@ -86,8 +101,24 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
     const s = st.current;
+    const dark = darkRef.current;
     const now = performance.now();
     ctx.clearRect(0, 0, s.W, s.H);
+
+    // 深色:用不同深浅的紫色方格铺满;浅色:沿用整片绿
+    const paint = (alpha: number) => {
+      ctx.globalAlpha = alpha;
+      if (dark) {
+        for (const c of s.cells) {
+          ctx.fillStyle = c.color;
+          ctx.fillRect(c.x, c.y, c.cell + 1, c.cell + 1);
+        }
+      } else {
+        ctx.fillStyle = GREEN;
+        ctx.fillRect(0, 0, s.W, s.H);
+      }
+      ctx.globalAlpha = 1;
+    };
 
     if (s.phase === "rush") {
       const e = (now - s.t0) / 520;
@@ -97,26 +128,21 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
         p.vx *= 1.04;
         p.vy *= 1.04;
         p.sz *= 1.085;
-        ctx.fillStyle = GLOW;
+        ctx.fillStyle = dark ? PURPLE_GLOW : GLOW;
         ctx.fillRect(p.x - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz);
       }
-      ctx.globalAlpha = clamp((e - 0.45) / 0.55, 0, 1);
-      ctx.fillStyle = GREEN;
-      ctx.fillRect(0, 0, s.W, s.H);
-      ctx.globalAlpha = 1;
+      paint(clamp((e - 0.45) / 0.55, 0, 1));
       if (e >= 1) {
         s.phase = "cover";
         s.coverT0 = now;
         router.push(TARGET);
       }
     } else if (s.phase === "cover") {
-      ctx.fillStyle = GREEN;
-      ctx.fillRect(0, 0, s.W, s.H);
+      paint(1);
       const held = now - s.coverT0;
       if ((s.pendingReveal && held > 200) || held > 1600) {
         s.phase = "reveal";
         s.t0 = now;
-        buildCells();
       }
     } else if (s.phase === "reveal") {
       const e = (now - s.t0) / 720;
@@ -124,7 +150,7 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
         const k = easeIO(clamp((e - c.delay) / 0.4, 0, 1));
         if (k < 1) {
           ctx.globalAlpha = 1 - k;
-          ctx.fillStyle = GREEN;
+          ctx.fillStyle = c.color;
           const sh = k * c.cell;
           ctx.fillRect(c.x, c.y + sh * 0.6, c.cell + 1, c.cell - sh + 1);
         }
@@ -156,6 +182,7 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
         router.push(TARGET);
         return;
       }
+      buildCells(); // 预先生成紫色方格(供 rush 渐显 / cover 覆盖 / reveal 揭开复用)
       s.parts = o.points.map((p) => {
         const dx = p.x - o.click.x;
         const dy = p.y - o.click.y;

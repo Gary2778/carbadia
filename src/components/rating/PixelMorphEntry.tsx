@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
 import { useRatingTransition, type Pt } from "./PixelTransition";
 import { useLang, useT } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 
 const MORPH = "CARBON RATING"; // 悬停后的像素英文（两种语言一致）
 const GAP = 4; // 采样网格更细 → 字母分辨率更高、英文清晰
@@ -40,9 +41,19 @@ function sample(text: string, fs: number) {
   return { pts, tw, th };
 }
 
+// 深色模式下评级入口改用紫色(与全屏紫色覆盖层呼应);浅色保持品牌绿
+const cBase = (dark: boolean) => (dark ? "#9b6dff" : GREEN);
+const cGlow = (dark: boolean) => (dark ? "#c9a8ff" : GLOW);
+
 export function PixelMorphEntry() {
   const reduced = useReducedMotion();
   const { lang } = useLang();
+  const dark = useTheme().theme === "dark";
+  // 卡片配色(深色紫 / 浅色绿)——完整类名字面量,便于 Tailwind 扫描生成
+  const cGrad = dark ? "from-[#7e4ddb]/10" : "from-accent/[0.06]";
+  const cBorderHover = dark ? "hover:border-[#9b6dff]/50" : "hover:border-accent/40";
+  const cKicker = dark ? "text-[#b794ff]/80" : "text-accent/80";
+  const cAccent = dark ? "text-[#b794ff]" : "text-accent";
   const tx = useT({
     en: { kicker: "CARBADIA · EXCLUSIVE", rest: "Carbon Rating", cta: "Hover to wake · click to enter", ctaReduced: "Enter rating service", aria: "Carbon Credit Rating service" },
     zh: { kicker: "CARBADIA · 独家评级服务", rest: "碳信用评级", cta: "悬停唤醒 · 点击进入", ctaReduced: "进入评级服务", aria: "碳信用评级服务" },
@@ -65,6 +76,8 @@ export function PixelMorphEntry() {
     if (!ctx) return;
     const s = st.current;
     const restText = lang === "zh" ? "碳信用评级" : "Carbon Rating";
+    const colBase = cBase(dark);
+    const colGlow = cGlow(dark);
 
     const build = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -121,7 +134,7 @@ export function PixelMorphEntry() {
       const zhA = 1 - clamp(s.h / 0.32, 0, 1);
       if (zhA > 0) {
         ctx.globalAlpha = zhA;
-        ctx.fillStyle = GREEN;
+        ctx.fillStyle = colBase;
         ctx.font = s.restFont;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -146,7 +159,7 @@ export function PixelMorphEntry() {
           }
           const tw = (Math.sin(s.t * 1.7 + p.ph) + 1) / 2;
           ctx.globalAlpha = clamp(pA * (0.78 + 0.22 * tw) + infl * 0.5, 0, 1);
-          ctx.fillStyle = full || infl > 0.22 ? GLOW : GREEN;
+          ctx.fillStyle = full || infl > 0.22 ? colGlow : colBase;
           const sz = SQ + (full ? tw * 0.8 : 0) + infl * 2;
           ctx.fillRect(px - (sz - SQ) / 2, py - (sz - SQ) / 2, sz, sz);
         }
@@ -191,7 +204,7 @@ export function PixelMorphEntry() {
       window.removeEventListener("resize", rebuild);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [reduced, lang]);
+  }, [reduced, lang, dark]);
 
   function onClick(e: React.MouseEvent) {
     if (reduced) return; // 让 <Link> 正常跳转
@@ -219,11 +232,11 @@ export function PixelMorphEntry() {
       <Link
         href="/rating"
         aria-label={tx.aria}
-        className="group block w-full max-w-2xl mx-auto rounded-3xl border border-border bg-gradient-to-b from-accent/[0.06] to-transparent shadow-soft hover:shadow-card hover:border-accent/40 transition-all duration-300 px-6 py-9 text-center"
+        className={`group block w-full max-w-2xl mx-auto rounded-3xl border border-border bg-gradient-to-b ${cGrad} to-transparent shadow-soft hover:shadow-card ${cBorderHover} transition-all duration-300 px-6 py-9 text-center`}
       >
-        <p className="font-mono text-[10px] tracking-[0.3em] text-accent/80 mb-3">{tx.kicker}</p>
-        <div className="text-3xl font-semibold text-accent">{tx.rest}</div>
-        <div className="inline-flex items-center gap-1.5 text-sm font-medium text-accent mt-4">
+        <p className={`font-mono text-[10px] tracking-[0.3em] ${cKicker} mb-3`}>{tx.kicker}</p>
+        <div className={`text-3xl font-semibold ${cAccent}`}>{tx.rest}</div>
+        <div className={`inline-flex items-center gap-1.5 text-sm font-medium ${cAccent} mt-4`}>
           {tx.ctaReduced} <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
         </div>
       </Link>
@@ -235,11 +248,11 @@ export function PixelMorphEntry() {
       href="/rating"
       onClick={onClick}
       aria-label={tx.aria}
-      className="group relative block w-full max-w-2xl mx-auto rounded-3xl border border-border bg-gradient-to-b from-accent/[0.06] to-transparent shadow-soft hover:shadow-card hover:border-accent/40 transition-all duration-300 cursor-pointer px-6 pt-5 pb-5"
+      className={`group relative block w-full max-w-2xl mx-auto rounded-3xl border border-border bg-gradient-to-b ${cGrad} to-transparent shadow-soft hover:shadow-card ${cBorderHover} transition-all duration-300 cursor-pointer px-6 pt-5 pb-5`}
     >
-      <p className="font-mono text-[10px] tracking-[0.3em] text-accent/80 text-center">{tx.kicker}</p>
+      <p className={`font-mono text-[10px] tracking-[0.3em] ${cKicker} text-center`}>{tx.kicker}</p>
       <canvas ref={canvasRef} className="block w-full h-[150px]" />
-      <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-accent">
+      <div className={`flex items-center justify-center gap-1.5 text-sm font-medium ${cAccent}`}>
         {tx.cta}
         <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
       </div>
