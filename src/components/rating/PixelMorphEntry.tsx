@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
 import { useRatingTransition, type Pt } from "./PixelTransition";
+import { useLang, useT } from "@/lib/i18n";
 
-const ZH = "碳信用评级";
-const EN = "CARBON RATING";
+const MORPH = "CARBON RATING"; // 悬停后的像素英文（两种语言一致）
 const GAP = 4; // 采样网格更细 → 字母分辨率更高、英文清晰
-const SQ = 3;  // 像素方块(留 1px 缝)
+const SQ = 3; // 像素方块(留 1px 缝)
 const GREEN = "#0a8a52";
 const GLOW = "#16d97f";
 const FONT = (fs: number) => `700 ${fs}px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif`;
@@ -42,12 +42,17 @@ function sample(text: string, fs: number) {
 
 export function PixelMorphEntry() {
   const reduced = useReducedMotion();
+  const { lang } = useLang();
+  const tx = useT({
+    en: { kicker: "CARBADIA · EXCLUSIVE", rest: "Carbon Rating", cta: "Hover to wake · click to enter", ctaReduced: "Enter rating service", aria: "Carbon Credit Rating service" },
+    zh: { kicker: "CARBADIA · 独家评级服务", rest: "碳信用评级", cta: "悬停唤醒 · 点击进入", ctaReduced: "进入评级服务", aria: "碳信用评级服务" },
+  });
   const { enter } = useRatingTransition();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const raf = useRef(0);
   const st = useRef({
     parts: [] as Particle[],
-    W: 0, H: 0, zhFont: "",
+    W: 0, H: 0, restFont: "",
     h: 0, hoverT: 0, t: 0, mouseX: -999, mouseY: -999,
     launched: false, // 点击后清空本地文字，让像素消散交给全屏覆盖层
   });
@@ -59,6 +64,7 @@ export function PixelMorphEntry() {
     const ctx = cvs.getContext("2d");
     if (!ctx) return;
     const s = st.current;
+    const restText = lang === "zh" ? "碳信用评级" : "Carbon Rating";
 
     const build = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -69,17 +75,22 @@ export function PixelMorphEntry() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       s.W = W;
       s.H = H;
-      const zhFS = Math.max(40, Math.min(88, W / (ZH.length + 0.8)));
-      s.zhFont = FONT(zhFS);
-      // 英文按宽度自适应：先估字号，再按实测宽度收缩到画布内，保证清晰且不溢出
-      let enFS = Math.max(44, Math.min(84, W / (EN.length * 0.6)));
-      let E = sample(EN, enFS);
       const avail = W * 0.94;
+      // 静止文字（平滑矢量字）：按宽度自适应字号
+      let restFS = lang === "zh" ? Math.min(88, W / (restText.length + 0.8)) : Math.min(66, W / (restText.length * 0.55));
+      let Z = sample(restText, restFS);
+      if (Z.tw > avail) {
+        restFS = Math.max(28, restFS * (avail / Z.tw));
+        Z = sample(restText, restFS);
+      }
+      s.restFont = FONT(restFS);
+      // 悬停像素英文：按宽度自适应，保证清晰且不溢出
+      let enFS = Math.max(44, Math.min(84, W / (MORPH.length * 0.6)));
+      let E = sample(MORPH, enFS);
       if (E.tw > avail) {
         enFS = Math.max(28, enFS * (avail / E.tw));
-        E = sample(EN, enFS);
+        E = sample(MORPH, enFS);
       }
-      const Z = sample(ZH, zhFS);
       const exo = (W - E.tw) / 2, eyo = (H - E.th) / 2, zxo = (W - Z.tw) / 2, zyo = (H - Z.th) / 2;
       const cx = W / 2, cy = H / 2;
       s.parts = E.pts.map((p, i) => {
@@ -104,7 +115,6 @@ export function PixelMorphEntry() {
       s.h += (s.hoverT - s.h) * 0.07;
       ctx.clearRect(0, 0, s.W, s.H);
       if (s.launched) {
-        // 文字已交给覆盖层飞散：本地保持清空
         raf.current = requestAnimationFrame(frame);
         return;
       }
@@ -112,10 +122,10 @@ export function PixelMorphEntry() {
       if (zhA > 0) {
         ctx.globalAlpha = zhA;
         ctx.fillStyle = GREEN;
-        ctx.font = s.zhFont;
+        ctx.font = s.restFont;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(ZH, s.W / 2, s.H / 2);
+        ctx.fillText(restText, s.W / 2, s.H / 2);
         ctx.globalAlpha = 1;
       }
       const pA = clamp((s.h - 0.1) / 0.4, 0, 1);
@@ -165,6 +175,7 @@ export function PixelMorphEntry() {
       }
     };
 
+    s.launched = false;
     build();
     raf.current = requestAnimationFrame(frame);
     const rebuild = () => build();
@@ -180,7 +191,7 @@ export function PixelMorphEntry() {
       window.removeEventListener("resize", rebuild);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [reduced]);
+  }, [reduced, lang]);
 
   function onClick(e: React.MouseEvent) {
     if (reduced) return; // 让 <Link> 正常跳转
@@ -207,13 +218,13 @@ export function PixelMorphEntry() {
     return (
       <Link
         href="/rating"
-        aria-label="碳信用评级服务"
+        aria-label={tx.aria}
         className="group block w-full max-w-2xl mx-auto rounded-3xl border border-border bg-gradient-to-b from-accent/[0.06] to-transparent shadow-soft hover:shadow-card hover:border-accent/40 transition-all duration-300 px-6 py-9 text-center"
       >
-        <p className="font-mono text-[10px] tracking-[0.3em] text-accent/80 mb-3">CARBADIA · 独家评级服务</p>
-        <div className="text-3xl font-semibold text-accent">碳信用评级</div>
+        <p className="font-mono text-[10px] tracking-[0.3em] text-accent/80 mb-3">{tx.kicker}</p>
+        <div className="text-3xl font-semibold text-accent">{tx.rest}</div>
         <div className="inline-flex items-center gap-1.5 text-sm font-medium text-accent mt-4">
-          进入评级服务 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+          {tx.ctaReduced} <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
         </div>
       </Link>
     );
@@ -223,13 +234,13 @@ export function PixelMorphEntry() {
     <Link
       href="/rating"
       onClick={onClick}
-      aria-label="碳信用评级服务"
+      aria-label={tx.aria}
       className="group relative block w-full max-w-2xl mx-auto rounded-3xl border border-border bg-gradient-to-b from-accent/[0.06] to-transparent shadow-soft hover:shadow-card hover:border-accent/40 transition-all duration-300 cursor-pointer px-6 pt-5 pb-5"
     >
-      <p className="font-mono text-[10px] tracking-[0.3em] text-accent/80 text-center">CARBADIA · 独家评级服务</p>
+      <p className="font-mono text-[10px] tracking-[0.3em] text-accent/80 text-center">{tx.kicker}</p>
       <canvas ref={canvasRef} className="block w-full h-[150px]" />
       <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-accent">
-        悬停唤醒 · 点击进入
+        {tx.cta}
         <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
       </div>
     </Link>

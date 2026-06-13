@@ -6,17 +6,46 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { api } from "@/lib/format";
 import { NumberTicker } from "@/components/anim/NumberTicker";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useT } from "@/lib/i18n";
 
 type Me = { id: string; name: string; email: string; cashBalance: number; lockedCash: number } | null;
 
-const links = [
-  { href: "/", label: "行情" },
-  { href: "/otc", label: "OTC 挂牌" },
-  { href: "/rating", label: "评级" },
-  { href: "/portfolio", label: "我的资产" },
+type LinkKey = "markets" | "otc" | "rating" | "portfolio";
+const LINKS: { href: string; key: LinkKey }[] = [
+  { href: "/", key: "markets" },
+  { href: "/otc", key: "otc" },
+  { href: "/rating", key: "rating" },
+  { href: "/portfolio", key: "portfolio" },
 ];
 
+const DICT = {
+  en: {
+    demo: "Demo",
+    markets: "Markets",
+    otc: "OTC",
+    rating: "Ratings",
+    portfolio: "Portfolio",
+    cash: "Available cash",
+    logout: "Log out",
+    login: "Log in",
+    register: "Sign up",
+  },
+  zh: {
+    demo: "模拟盘",
+    markets: "行情",
+    otc: "OTC 挂牌",
+    rating: "评级",
+    portfolio: "我的资产",
+    cash: "可用现金",
+    logout: "退出",
+    login: "登录",
+    register: "注册",
+  },
+};
+
 export function Nav() {
+  const t = useT(DICT);
   const pathname = usePathname();
   const router = useRouter();
   const [me, setMe] = useState<Me>(null);
@@ -55,11 +84,11 @@ export function Nav() {
           <span className="text-accent text-lg">🌿</span>
           <span>Carbadia</span>
           <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20">
-            模拟盘
+            {t.demo}
           </span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
-          {links.map((l) => {
+          {LINKS.map((l) => {
             const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
             return (
               <Link key={l.href} href={l.href} className="relative px-3 py-1.5 rounded-full">
@@ -71,17 +100,18 @@ export function Nav() {
                   />
                 )}
                 <span className={`relative transition-colors ${active ? "text-foreground" : "text-muted hover:text-foreground"}`}>
-                  {l.label}
+                  {t[l.key]}
                 </span>
               </Link>
             );
           })}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
+          <LanguageToggle />
           {!loaded ? null : me ? (
             <>
               <div className="text-right hidden sm:block">
-                <div className="text-xs text-muted">可用现金</div>
+                <div className="text-xs text-muted">{t.cash}</div>
                 <div className="tnum text-accent">
                   ¥<NumberTicker value={me.cashBalance} />
                 </div>
@@ -89,19 +119,19 @@ export function Nav() {
               <div className="h-8 w-px bg-border hidden sm:block" />
               <span className="text-muted">{me.name}</span>
               <button onClick={logout} className="text-muted hover:text-down transition-colors">
-                退出
+                {t.logout}
               </button>
             </>
           ) : (
             <>
               <Link href="/login" className="text-muted hover:text-foreground">
-                登录
+                {t.login}
               </Link>
               <Link
                 href="/register"
                 className="px-4 py-1.5 rounded-full bg-accent text-background font-medium hover:bg-accent-strong transition-colors"
               >
-                注册
+                {t.register}
               </Link>
             </>
           )}
