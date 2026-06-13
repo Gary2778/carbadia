@@ -101,17 +101,22 @@ export default function Home() {
         <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight leading-[1.05] mb-6">
           {t.heroLines.map((line, li) => (
             <span key={li} className="block">
-              {[...line].map((ch, i) => (
-                <motion.span
-                  key={i}
-                  className="inline-block"
-                  initial={reduced ? false : { opacity: 0, y: 26 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: reduced ? 0 : 0.06 * (li * line.length + i) + 0.15, duration: 0.55, ease: [0.21, 0.7, 0.3, 1] }}
-                >
-                  {ch}
-                </motion.span>
-              ))}
+              {[...line].map((ch, i) =>
+                ch === " " ? (
+                  // 空格保留为可换行的真实空白（英文标题词间距），不套 inline-block 以免被折叠
+                  <span key={i}>{" "}</span>
+                ) : (
+                  <motion.span
+                    key={i}
+                    className="inline-block"
+                    initial={reduced ? false : { opacity: 0, y: 26 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: reduced ? 0 : 0.06 * (li * line.length + i) + 0.15, duration: 0.55, ease: [0.21, 0.7, 0.3, 1] }}
+                  >
+                    {ch}
+                  </motion.span>
+                )
+              )}
             </span>
           ))}
         </h1>
