@@ -2,14 +2,14 @@
 
 import { useTheme } from "@/lib/theme";
 
-// 手绘风格的星空(无山丘)。手绘感来自三处:
+// 手绘风格的星空(无山丘)。手绘感来自:
 //   1) 一张 SVG 滤镜(分形噪声 + 位移贴图)整体抖动线条,边缘像钢笔/铅笔手绘;
-//   2) 描边的"涂鸦"五角星,顶点带烘焙抖动、起收笔留开口;
-//   3) 几道极淡的虚线"星座连线"与一颗划过的流星,像随手画在笔记本上的夜空。
-// 弯月用墨线勾勒(浅填 + 陨石坑小圈 + 放射光泽短线)。
+//   2) 描边的"涂鸦"五角星(顶点烘焙抖动、起收笔留开口)、十字闪光、墨点;
+//   3) 几道极淡的虚线"星座连线";
+//   4) 一颗会周期性划过夜空的流星(CSS 动画,reduced-motion 时静止)。
+// 弯月用墨线勾勒(浅填 + 陨石坑 + 放射光泽短线),并带一张 Peppa 风小笑脸。
 // 只在深色模式渲染,固定铺满视口、置于内容之后、不可交互。
-// 所有随机量(位置/抖动/旋转/连线/计时)都在模块加载时一次性烘焙,
-// 渲染期不再调用随机——避免服务端持久模块与客户端之间的水合不一致。
+// 所有随机量都在模块加载时烘焙,渲染期不再取随机 → 避免 SSR/CSR 水合不一致。
 
 // 稳定伪随机:同一 seed 在服务端/客户端产生相同序列。
 function mulberry32(seed: number) {
@@ -75,16 +75,16 @@ function bakeRays(r: number): Ray[] {
   ];
 }
 
-// 星场(上方 ~2/3 天空,疏密有致):五角星为主,辅以十字闪光与墨点。
-const STARS: StarItem[] = Array.from({ length: 46 }, () => {
+// 星场(更密一些:上方 ~2/3 天空,以墨点与小星为主,辅以大涂鸦星与十字闪光)。
+const STARS: StarItem[] = Array.from({ length: 64 }, () => {
   const roll = rnd();
-  const kind: Kind = roll < 0.5 ? "star" : roll < 0.8 ? "spark" : "dot";
+  const kind: Kind = roll < 0.42 ? "star" : roll < 0.66 ? "spark" : "dot";
   const x = rnd() * 1440;
-  const y = 24 + Math.pow(rnd(), 1.35) * 588; // 越往下越稀疏
+  const y = 24 + Math.pow(rnd(), 1.3) * 660; // 越往下越稀疏
   let r: number;
-  if (kind === "star") r = 7 + rnd() * 12;
-  else if (kind === "spark") r = 9 + rnd() * 13;
-  else r = 1.6 + rnd() * 2.4;
+  if (kind === "star") r = 6 + rnd() * 10;
+  else if (kind === "spark") r = 8 + rnd() * 11;
+  else r = 1.5 + rnd() * 2.5;
 
   return {
     kind,
@@ -106,7 +106,7 @@ const STAR_ONLY = STARS.filter((s) => s.kind === "star");
 const CONSTELLATIONS: { x1: number; y1: number; x2: number; y2: number }[] = [];
 {
   const seen = new Set<string>();
-  for (let k = 0; k < 7 && STAR_ONLY.length > 1; k++) {
+  for (let k = 0; k < 9 && STAR_ONLY.length > 1; k++) {
     const a = STAR_ONLY[Math.floor(rnd() * STAR_ONLY.length)];
     let best: StarItem | null = null;
     let bd = Infinity;
@@ -118,7 +118,7 @@ const CONSTELLATIONS: { x1: number; y1: number; x2: number; y2: number }[] = [];
         best = b;
       }
     }
-    if (best && bd < 300) {
+    if (best && bd < 240) {
       const key = [Math.min(a.x, best.x), Math.min(a.y, best.y), Math.max(a.x, best.x)].map((n) => n.toFixed(0)).join("_");
       if (!seen.has(key)) {
         seen.add(key);
@@ -127,9 +127,6 @@ const CONSTELLATIONS: { x1: number; y1: number; x2: number; y2: number }[] = [];
     }
   }
 }
-
-// 一颗划过的流星:轻微弯曲的虚线尾迹 + 末端小闪光(静态,像画上去的)。
-const SHOOT = { sx: 196, sy: 132, cx: 360, cy: 150, ex: 548, ey: 256 };
 
 // 弯月 + 放射光泽短线(角度/长度烘焙)。
 const MOON = { cx: 1190, cy: 150, r: 64 };
@@ -175,17 +172,10 @@ export function StarrySky() {
         {/* 整组套用粗墨抖动滤镜 */}
         <g filter="url(#sketchSky)">
           {/* ── 星座连线(最底层,极淡虚线) ── */}
-          <g stroke="#cfe3ff" strokeWidth={1} strokeLinecap="round" fill="none" opacity="0.22" strokeDasharray="2 7">
+          <g stroke="#cfe3ff" strokeWidth={1} strokeLinecap="round" fill="none" opacity="0.2" strokeDasharray="2 7">
             {CONSTELLATIONS.map((c, i) => (
               <line key={i} x1={c.x1.toFixed(1)} y1={c.y1.toFixed(1)} x2={c.x2.toFixed(1)} y2={c.y2.toFixed(1)} />
             ))}
-          </g>
-
-          {/* ── 流星:弯曲虚线尾迹 + 末端小闪光 ── */}
-          <g stroke="#fff7e6" fill="none" strokeLinecap="round" opacity="0.7">
-            <path d={`M${SHOOT.sx},${SHOOT.sy} Q${SHOOT.cx},${SHOOT.cy} ${SHOOT.ex},${SHOOT.ey}`} strokeWidth={1.6} strokeDasharray="1 7" />
-            <line x1={SHOOT.ex - 7} y1={SHOOT.ey} x2={SHOOT.ex + 7} y2={SHOOT.ey} strokeWidth={1.4} />
-            <line x1={SHOOT.ex} y1={SHOOT.ey - 7} x2={SHOOT.ex} y2={SHOOT.ey + 7} strokeWidth={1.4} />
           </g>
 
           {/* ── 弯月:浅填 + 墨线描边 ── */}
@@ -203,12 +193,25 @@ export function StarrySky() {
           <g fill="none" stroke="#ffe9a8" strokeWidth={1.4} strokeLinecap="round" opacity="0.9">
             <circle cx={MOON.cx - 18} cy={MOON.cy + 10} r={6} />
             <circle cx={MOON.cx - 30} cy={MOON.cy - 14} r={4} />
-            <circle cx={MOON.cx - 8} cy={MOON.cy + 30} r={3} />
           </g>
           <g stroke="#ffe9a8" strokeWidth={1.6} strokeLinecap="round" opacity="0.75">
             {SHINE.map((s, i) => (
               <line key={i} x1={s.x1.toFixed(1)} y1={s.y1.toFixed(1)} x2={s.x2.toFixed(1)} y2={s.y2.toFixed(1)} />
             ))}
+          </g>
+          {/* ── 月亮的 Peppa 风小笑脸:点眼 + 微笑 + 腮红(画在月牙下方饱满处) ── */}
+          <g>
+            <circle cx={MOON.cx - 24} cy={MOON.cy + 34} r={2.6} fill="#fff7e6" />
+            <circle cx={MOON.cx - 6} cy={MOON.cy + 36} r={2.6} fill="#fff7e6" />
+            <path
+              d={`M${MOON.cx - 28},${MOON.cy + 43} Q${MOON.cx - 15},${MOON.cy + 52} ${MOON.cx - 2},${MOON.cy + 44}`}
+              fill="none"
+              stroke="#fff7e6"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+            />
+            <circle cx={MOON.cx - 36} cy={MOON.cy + 42} r={3.4} fill="#ff9ec4" opacity={0.5} />
+            <circle cx={MOON.cx + 4} cy={MOON.cy + 44} r={3.4} fill="#ff9ec4" opacity={0.5} />
           </g>
 
           {/* ── 星场:CSS 眨眼,错峰;reduced-motion 由 globals.css 关闭 ── */}
@@ -232,6 +235,18 @@ export function StarrySky() {
               {s.kind === "dot" && <circle r={s.r} fill={s.color} />}
             </g>
           ))}
+        </g>
+
+        {/* ── 流星:周期性掠过(放在滤镜组外,避免每帧重算滤镜;尾迹用虚线保手绘味) ── */}
+        <g transform="translate(300 138)">
+          <g className="carbadia-shoot">
+            <line x1="0" y1="0" x2="-52" y2="-24" stroke="#fff7e6" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="1 6" opacity="0.85" />
+            <circle r="2.4" fill="#fff7e6" />
+            <g stroke="#fff7e6" strokeWidth="1.2" strokeLinecap="round" opacity="0.9">
+              <line x1="-6" y1="0" x2="6" y2="0" />
+              <line x1="0" y1="-6" x2="0" y2="6" />
+            </g>
+          </g>
         </g>
       </svg>
     </div>

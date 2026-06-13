@@ -132,9 +132,38 @@ html[data-theme="dark"] body {
   }
 }
 
+/* ── 流星:偶尔划过(大半个周期隐身,短暂加速掠过后淡出) ── */
+@keyframes carbadia-shoot {
+  0%,
+  4% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  8% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 1;
+  }
+  26%,
+  100% {
+    opacity: 0;
+    transform: translate(330px, 150px);
+  }
+}
+
+.carbadia-shoot {
+  animation: carbadia-shoot 9s ease-in infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .carbadia-star {
     animation: none !important;
     opacity: 0.9;
+  }
+  /* 减弱动效时:流星静止显示在起点,不再循环掠过 */
+  .carbadia-shoot {
+    animation: none !important;
+    opacity: 0.85;
   }
 }
