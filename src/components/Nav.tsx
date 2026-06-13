@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { api, fmtMoney } from "@/lib/format";
+import { motion } from "motion/react";
+import { api } from "@/lib/format";
+import { NumberTicker } from "@/components/anim/NumberTicker";
 
 type Me = { id: string; name: string; email: string; cashBalance: number; lockedCash: number } | null;
 
@@ -18,6 +20,7 @@ export function Nav() {
   const router = useRouter();
   const [me, setMe] = useState<Me>(null);
   const [loaded, setLoaded] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     api<Me>("/api/auth/me")
@@ -25,6 +28,13 @@ export function Nav() {
       .catch(() => setMe(null))
       .finally(() => setLoaded(true));
   }, [pathname]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   async function logout() {
     await api("/api/auth/logout", { method: "POST" });
@@ -34,24 +44,34 @@ export function Nav() {
   }
 
   return (
-    <header className="border-b border-border bg-surface/70 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/60 sticky top-0 z-20">
+    <header
+      className={`sticky top-0 z-20 border-b backdrop-blur-xl transition-all duration-300 ${
+        scrolled ? "border-border bg-surface/80 shadow-soft" : "border-border/60 bg-surface/60"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-5 h-12 flex items-center gap-6">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
           <span className="text-accent text-lg">🌿</span>
           <span>Carbadia</span>
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20">
+            模拟盘
+          </span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           {links.map((l) => {
             const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
             return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={`px-3 py-1.5 rounded-full transition-colors ${
-                  active ? "bg-surface-2 text-foreground" : "text-muted hover:text-foreground"
-                }`}
-              >
-                {l.label}
+              <Link key={l.href} href={l.href} className="relative px-3 py-1.5 rounded-full">
+                {active && (
+                  <motion.span
+                    layoutId="nav-active"
+                    className="absolute inset-0 bg-surface-2 rounded-full"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  />
+                )}
+                <span className={`relative transition-colors ${active ? "text-foreground" : "text-muted hover:text-foreground"}`}>
+                  {l.label}
+                </span>
               </Link>
             );
           })}
@@ -61,7 +81,9 @@ export function Nav() {
             <>
               <div className="text-right hidden sm:block">
                 <div className="text-xs text-muted">可用现金</div>
-                <div className="tnum text-accent">¥{fmtMoney(me.cashBalance)}</div>
+                <div className="tnum text-accent">
+                  ¥<NumberTicker value={me.cashBalance} />
+                </div>
               </div>
               <div className="h-8 w-px bg-border hidden sm:block" />
               <span className="text-muted">{me.name}</span>

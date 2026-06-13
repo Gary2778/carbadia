@@ -20,6 +20,23 @@ export async function GET(_req: Request, ctx: { params: Promise<{ symbol: string
       getCurrentUser(),
     ]);
 
+    const since = new Date(Date.now() - 24 * 3_600_000);
+    const t24 = await prisma.trade.findMany({
+      where: { assetId: asset.id, createdAt: { gte: since } },
+      orderBy: { createdAt: "asc" },
+      select: { price: true, quantity: true },
+    });
+    let high24h: number | null = null;
+    let low24h: number | null = null;
+    let vol24h = 0;
+    for (const t of t24) {
+      high24h = high24h == null ? t.price : Math.max(high24h, t.price);
+      low24h = low24h == null ? t.price : Math.min(low24h, t.price);
+      vol24h += t.quantity;
+    }
+    const change24h = t24.length >= 2 ? ((t24[t24.length - 1].price - t24[0].price) / t24[0].price) * 100 : null;
+    const stats = { high24h, low24h, vol24h, change24h };
+
     let holding = null;
     let myOrders: unknown[] = [];
     if (user) {
@@ -32,7 +49,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ symbol: string
       });
     }
 
-    return ok({ asset, book, trades, holding, myOrders });
+    return ok({ asset, stats, book, trades, holding, myOrders });
   } catch (err) {
     return handle(err);
   }

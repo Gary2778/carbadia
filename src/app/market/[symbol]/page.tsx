@@ -2,7 +2,14 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "motion/react";
 import { api, fmtMoney, fmtQty } from "@/lib/format";
+import { CandleChart } from "@/components/charts/CandleChart";
+import { DepthChart } from "@/components/charts/DepthChart";
+import { NumberTicker } from "@/components/anim/NumberTicker";
+import { FlashCell } from "@/components/anim/FlashCell";
+import { useToast } from "@/components/anim/Toast";
+import type { Candle, IntervalKey } from "@/lib/candles";
 
 type Level = { price: number; quantity: number };
 type MarketData = {
@@ -10,15 +17,26 @@ type MarketData = {
     id: string; symbol: string; name: string; standard: string; projectType: string;
     vintage: number; country: string; registry: string; description: string; lastPrice: number | null;
   };
+  stats: { high24h: number | null; low24h: number | null; vol24h: number; change24h: number | null };
   book: { bids: Level[]; asks: Level[] };
   trades: { id: string; price: number; quantity: number; createdAt: string }[];
   holding: { quantity: number; locked: number } | null;
   myOrders: { id: string; side: string; type: string; price: number | null; quantity: number; filledQuantity: number; status: string }[];
 };
 
+const INTERVAL_TABS: { key: IntervalKey; label: string }[] = [
+  { key: "1m", label: "1分" },
+  { key: "5m", label: "5分" },
+  { key: "1h", label: "1时" },
+  { key: "1d", label: "1日" },
+];
+
 export default function MarketPage({ params }: { params: Promise<{ symbol: string }> }) {
   const { symbol } = use(params);
   const [data, setData] = useState<MarketData | null>(null);
+  const [candles, setCandles] = useState<Candle[]>([]);
+  const [period, setPeriod] = useState<IntervalKey>("1m");
+  const [tab, setTab] = useState<"candles" | "depth">("candles");
   const [err, setErr] = useState("");
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
 
@@ -32,20 +50,35 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
     }
   }, [symbol]);
 
+  const loadCandles = useCallback(async () => {
+    try {
+      const d = await api<{ candles: Candle[] }>(`/api/assets/${symbol}/candles?interval=${period}`);
+      setCandles(d.candles);
+    } catch {
+      /* 图表数据失败不打断页面 */
+    }
+  }, [symbol, period]);
+
   useEffect(() => {
     api("/api/auth/me").then((u) => setLoggedIn(!!u)).catch(() => setLoggedIn(false));
   }, []);
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 3000);
+    const t = setInterval(load, 2000);
     return () => clearInterval(t);
   }, [load]);
+
+  useEffect(() => {
+    loadCandles();
+    const t = setInterval(loadCandles, 5000);
+    return () => clearInterval(t);
+  }, [loadCandles]);
 
   if (err) return <div className="text-down p-8 text-center">{err}</div>;
   if (!data) return <div className="text-muted p-8 text-center">加载中…</div>;
 
-  const { asset, book, trades, holding, myOrders } = data;
+  const { asset, stats, book, trades, holding, myOrders } = data;
   const maxDepth = Math.max(1, ...book.bids.map((b) => b.quantity), ...book.asks.map((a) => a.quantity));
 
   return (
@@ -61,8 +94,32 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
         </div>
         <div>
           <div className="text-xs text-muted">最新成交价</div>
-          <div className="tnum text-2xl font-semibold text-accent">
-            {asset.lastPrice == null ? "—" : `¥${fmtMoney(asset.lastPrice)}`}
+          <div className="flex items-baseline gap-2">
+            <FlashCell value={asset.lastPrice} className="inline-block px-1 -mx-1">
+              <span className="tnum text-2xl font-semibold text-accent">
+                {asset.lastPrice == null ? "—" : <>¥<NumberTicker value={asset.lastPrice} /></>}
+              </span>
+            </FlashCell>
+            {stats.change24h != null && (
+              <span
+                className={`tnum text-xs px-1.5 py-0.5 rounded font-medium ${
+                  stats.change24h >= 0 ? "bg-up/10 text-up" : "bg-down/10 text-down"
+                }`}
+              >
+                {stats.change24h >= 0 ? "+" : ""}
+                {stats.change24h.toFixed(2)}%
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="text-sm space-y-0.5">
+          <div className="text-xs text-muted">24h 高 / 低 / 量</div>
+          <div className="tnum">
+            <span className="text-up">{stats.high24h == null ? "—" : fmtMoney(stats.high24h)}</span>
+            <span className="text-muted mx-1">/</span>
+            <span className="text-down">{stats.low24h == null ? "—" : fmtMoney(stats.low24h)}</span>
+            <span className="text-muted mx-1">/</span>
+            <span>{fmtQty(stats.vol24h)} 吨</span>
           </div>
         </div>
         <div className="text-sm text-muted space-y-0.5">
@@ -72,57 +129,111 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* 订单簿 */}
-        <div className="rounded-2xl border border-border bg-surface shadow-card">
-          <div className="px-4 py-2.5 border-b border-border font-semibold text-sm">订单簿</div>
-          <div className="p-2">
-            <DepthSide levels={book.asks} side="ask" max={maxDepth} reverse />
-            <div className="py-2 px-2 my-1 border-y border-border tnum text-center text-lg font-semibold">
-              {asset.lastPrice == null ? <span className="text-muted text-sm">暂无成交</span> : `¥${fmtMoney(asset.lastPrice)}`}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+        {/* 左侧: 图表 + 最近成交 */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="rounded-2xl border border-border bg-surface shadow-card">
+            <div className="px-4 py-2 border-b border-border flex items-center gap-1">
+              {(["candles", "depth"] as const).map((t) => (
+                <button key={t} onClick={() => setTab(t)} className="relative px-3 py-1.5 text-sm rounded-full">
+                  {tab === t && (
+                    <motion.span
+                      layoutId="chart-tab"
+                      className="absolute inset-0 bg-surface-2 rounded-full"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <span className={`relative ${tab === t ? "text-foreground font-medium" : "text-muted"}`}>
+                    {t === "candles" ? "K线" : "深度"}
+                  </span>
+                </button>
+              ))}
+              {tab === "candles" && (
+                <div className="ml-auto flex gap-1">
+                  {INTERVAL_TABS.map((it) => (
+                    <button
+                      key={it.key}
+                      onClick={() => setPeriod(it.key)}
+                      className={`px-2.5 py-1 text-xs rounded transition-colors ${
+                        period === it.key ? "bg-surface-2 text-foreground border border-border" : "text-muted hover:text-foreground"
+                      }`}
+                    >
+                      {it.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <DepthSide levels={book.bids} side="bid" max={maxDepth} />
-          </div>
-        </div>
-
-        {/* 下单 */}
-        <div className="rounded-2xl border border-border bg-surface shadow-card">
-          <div className="px-4 py-2.5 border-b border-border font-semibold text-sm">下单</div>
-          <div className="p-4">
-            {loggedIn === false ? (
-              <div className="text-center text-muted text-sm py-8">
-                请先<Link href="/login" className="text-accent mx-1">登录</Link>后交易
-              </div>
-            ) : (
-              <OrderForm
-                assetId={asset.id}
-                bestAsk={book.asks[0]?.price ?? null}
-                bestBid={book.bids[0]?.price ?? null}
-                holding={holding}
-                onDone={load}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* 最近成交 */}
-        <div className="rounded-2xl border border-border bg-surface shadow-card">
-          <div className="px-4 py-2.5 border-b border-border font-semibold text-sm">最近成交</div>
-          <div className="p-2">
-            <div className="grid grid-cols-3 text-xs text-muted px-2 pb-1">
-              <span>价格</span><span className="text-right">数量</span><span className="text-right">时间</span>
-            </div>
-            <div className="max-h-[340px] overflow-y-auto">
-              {trades.length === 0 ? (
-                <div className="text-center text-muted text-sm py-8">暂无成交</div>
+            <div className="p-3">
+              {tab === "candles" ? (
+                <CandleChart candles={candles} lastPrice={asset.lastPrice} />
               ) : (
-                trades.map((t) => (
-                  <div key={t.id} className="grid grid-cols-3 text-xs tnum px-2 py-1 hover:bg-surface-2 rounded">
-                    <span className="text-accent">{fmtMoney(t.price)}</span>
-                    <span className="text-right">{fmtQty(t.quantity)}</span>
-                    <span className="text-right text-muted">{new Date(t.createdAt).toLocaleTimeString("zh-CN", { hour12: false })}</span>
-                  </div>
-                ))
+                <DepthChart bids={book.bids} asks={book.asks} />
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-surface shadow-card">
+            <div className="px-4 py-2.5 border-b border-border font-semibold text-sm">最近成交</div>
+            <div className="p-2">
+              <div className="grid grid-cols-3 text-xs text-muted px-2 pb-1">
+                <span>价格</span><span className="text-right">数量</span><span className="text-right">时间</span>
+              </div>
+              <div className="max-h-[280px] overflow-y-auto">
+                {trades.length === 0 ? (
+                  <div className="text-center text-muted text-sm py-8">暂无成交</div>
+                ) : (
+                  trades.map((t) => (
+                    <motion.div
+                      key={t.id}
+                      className="grid grid-cols-3 text-xs tnum px-2 py-1 hover:bg-surface-2 rounded"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <span className="text-accent">{fmtMoney(t.price)}</span>
+                      <span className="text-right">{fmtQty(t.quantity)}</span>
+                      <span className="text-right text-muted">
+                        {new Date(t.createdAt).toLocaleTimeString("zh-CN", { hour12: false })}
+                      </span>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 右侧: 订单簿 + 下单 */}
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-border bg-surface shadow-card">
+            <div className="px-4 py-2.5 border-b border-border font-semibold text-sm">订单簿</div>
+            <div className="p-2">
+              <DepthSide levels={book.asks} side="ask" max={maxDepth} reverse />
+              <div className="py-2 px-2 my-1 border-y border-border tnum text-center text-lg font-semibold">
+                <FlashCell value={asset.lastPrice} className="inline-block px-2 -mx-2">
+                  {asset.lastPrice == null ? <span className="text-muted text-sm">暂无成交</span> : `¥${fmtMoney(asset.lastPrice)}`}
+                </FlashCell>
+              </div>
+              <DepthSide levels={book.bids} side="bid" max={maxDepth} />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-surface shadow-card">
+            <div className="px-4 py-2.5 border-b border-border font-semibold text-sm">下单</div>
+            <div className="p-4">
+              {loggedIn === false ? (
+                <div className="text-center text-muted text-sm py-8">
+                  请先<Link href="/login" className="text-accent mx-1">登录</Link>后交易
+                </div>
+              ) : (
+                <OrderForm
+                  assetId={asset.id}
+                  bestAsk={book.asks[0]?.price ?? null}
+                  bestBid={book.bids[0]?.price ?? null}
+                  holding={holding}
+                  onDone={load}
+                />
               )}
             </div>
           </div>
@@ -179,12 +290,22 @@ function DepthSide({ levels, side, max, reverse }: { levels: Level[]; side: "bid
   return (
     <div>
       {rows.length === 0 && <div className="text-center text-muted text-xs py-3">无挂单</div>}
-      {rows.map((l, i) => (
-        <div key={i} className="relative grid grid-cols-2 text-xs tnum px-2 py-1">
-          <div className={`absolute inset-y-0 right-0 ${bar}`} style={{ width: `${(l.quantity / max) * 100}%` }} />
+      {rows.map((l) => (
+        <motion.div
+          key={l.price}
+          className="relative grid grid-cols-2 text-xs tnum px-2 py-1"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.25 }}
+        >
+          <motion.div
+            className={`absolute inset-y-0 right-0 ${bar}`}
+            animate={{ width: `${(l.quantity / max) * 100}%` }}
+            transition={{ type: "spring", stiffness: 120, damping: 22 }}
+          />
           <span className={`relative ${color}`}>{fmtMoney(l.price)}</span>
           <span className="relative text-right">{fmtQty(l.quantity)}</span>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
@@ -199,19 +320,19 @@ function OrderForm({
   holding: { quantity: number; locked: number } | null;
   onDone: () => void;
 }) {
+  const toast = useToast();
   const [side, setSide] = useState<"BUY" | "SELL">("BUY");
   const [type, setType] = useState<"LIMIT" | "MARKET">("LIMIT");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ t: "ok" | "err"; text: string } | null>(null);
+  const [done, setDone] = useState(false);
 
   const available = holding ? holding.quantity - holding.locked : 0;
   const estTotal = type === "LIMIT" && price && quantity ? Number(price) * Number(quantity) : null;
 
   async function submit() {
     setBusy(true);
-    setMsg(null);
     try {
       const res = await api<{ filledQty: number; order: { status: string } }>("/api/orders", {
         method: "POST",
@@ -223,15 +344,18 @@ function OrderForm({
           quantity: Number(quantity),
         }),
       });
-      const filled = res.filledQty;
-      setMsg({
-        t: "ok",
-        text: filled > 0 ? `成交 ${filled} 吨，订单状态: ${statusZh(res.order.status)}` : `已挂单 (${statusZh(res.order.status)})`,
-      });
+      toast(
+        "ok",
+        res.filledQty > 0
+          ? `成交 ${res.filledQty} 吨，订单${statusZh(res.order.status)}`
+          : `已挂单（${statusZh(res.order.status)}）`
+      );
       setQuantity("");
+      setDone(true);
+      setTimeout(() => setDone(false), 1200);
       onDone();
     } catch (e) {
-      setMsg({ t: "err", text: (e as Error).message });
+      toast("err", (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -299,22 +423,23 @@ function OrderForm({
         </div>
       )}
 
-      <button
+      <motion.button
         onClick={submit}
         disabled={busy || !quantity || (type === "LIMIT" && !price)}
-        className={`w-full py-3 rounded-full font-medium text-background disabled:opacity-40 transition-opacity hover:opacity-90 ${side === "BUY" ? "bg-up" : "bg-down"}`}
+        whileTap={{ scale: 0.97 }}
+        animate={done ? { scale: [1, 1.04, 1] } : undefined}
+        className={`w-full py-3 rounded-full font-medium text-background disabled:opacity-40 transition-colors ${
+          done ? "bg-accent" : side === "BUY" ? "bg-up" : "bg-down"
+        }`}
       >
-        {busy ? "提交中…" : side === "BUY" ? "买入" : "卖出"}
-      </button>
-
-      {msg && (
-        <div className={`text-xs text-center ${msg.t === "ok" ? "text-up" : "text-down"}`}>{msg.text}</div>
-      )}
+        {busy ? "提交中…" : done ? "✓ 已提交" : side === "BUY" ? "买入" : "卖出"}
+      </motion.button>
     </div>
   );
 }
 
 function CancelOrderBtn({ id, onDone }: { id: string; onDone: () => void }) {
+  const toast = useToast();
   const [busy, setBusy] = useState(false);
   return (
     <button
@@ -323,8 +448,10 @@ function CancelOrderBtn({ id, onDone }: { id: string; onDone: () => void }) {
         setBusy(true);
         try {
           await api(`/api/orders/${id}`, { method: "DELETE" });
+          toast("ok", "已撤单");
           onDone();
-        } catch {
+        } catch (e) {
+          toast("err", (e as Error).message);
           setBusy(false);
         }
       }}
