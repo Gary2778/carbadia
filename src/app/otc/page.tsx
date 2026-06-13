@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, fmtMoney, fmtQty } from "@/lib/format";
+import { Reveal } from "@/components/anim/Reveal";
+import { useToast } from "@/components/anim/Toast";
 
 type Listing = {
   id: string;
@@ -62,54 +64,57 @@ export default function OtcPage() {
 
       {showCreate && me && <CreateListing assets={assets} onDone={() => { setShowCreate(false); load(); }} />}
 
-      <div className="rounded-2xl border border-border bg-surface shadow-card overflow-hidden">
-        {listings.length === 0 ? (
-          <div className="p-10 text-center text-muted">暂无挂牌{!me && <>，<Link href="/login" className="text-accent">登录</Link>后可发布</>}</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-muted text-xs">
-                <tr className="border-b border-border">
-                  <th className="text-left px-5 py-3 font-medium">标的</th>
-                  <th className="text-left px-3 py-3 font-medium hidden md:table-cell">卖方</th>
-                  <th className="text-right px-3 py-3 font-medium">单价</th>
-                  <th className="text-right px-3 py-3 font-medium">可售(吨)</th>
-                  <th className="text-right px-3 py-3 font-medium hidden sm:table-cell">最小购买</th>
-                  <th className="text-right px-5 py-3 font-medium">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {listings.map((l) => (
-                  <tr key={l.id} className="border-b border-border/40 hover:bg-surface-2">
-                    <td className="px-5 py-3">
-                      <Link href={`/market/${l.asset.symbol}`} className="font-medium hover:text-accent">{l.asset.symbol}</Link>
-                      <div className="text-xs text-muted truncate max-w-[180px]">{l.asset.name}</div>
-                    </td>
-                    <td className="px-3 py-3 text-muted hidden md:table-cell">{l.seller.name}</td>
-                    <td className="px-3 py-3 text-right tnum text-accent">¥{fmtMoney(l.pricePerUnit)}</td>
-                    <td className="px-3 py-3 text-right tnum">{fmtQty(l.quantity)}</td>
-                    <td className="px-3 py-3 text-right tnum text-muted hidden sm:table-cell">{fmtQty(l.minQuantity)}</td>
-                    <td className="px-5 py-3 text-right">
-                      {me?.id === l.sellerId ? (
-                        <CancelListing id={l.id} onDone={load} />
-                      ) : me ? (
-                        <BuyListing listing={l} onDone={load} />
-                      ) : (
-                        <Link href="/login" className="text-xs text-accent">登录购买</Link>
-                      )}
-                    </td>
+      <Reveal>
+        <div className="rounded-2xl border border-border bg-surface shadow-card overflow-hidden">
+          {listings.length === 0 ? (
+            <div className="p-10 text-center text-muted">暂无挂牌{!me && <>，<Link href="/login" className="text-accent">登录</Link>后可发布</>}</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-muted text-xs">
+                  <tr className="border-b border-border">
+                    <th className="text-left px-5 py-3 font-medium">标的</th>
+                    <th className="text-left px-3 py-3 font-medium hidden md:table-cell">卖方</th>
+                    <th className="text-right px-3 py-3 font-medium">单价</th>
+                    <th className="text-right px-3 py-3 font-medium">可售(吨)</th>
+                    <th className="text-right px-3 py-3 font-medium hidden sm:table-cell">最小购买</th>
+                    <th className="text-right px-5 py-3 font-medium">操作</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                </thead>
+                <tbody>
+                  {listings.map((l) => (
+                    <tr key={l.id} className="border-b border-border/40 hover:bg-surface-2">
+                      <td className="px-5 py-3">
+                        <Link href={`/market/${l.asset.symbol}`} className="font-medium hover:text-accent">{l.asset.symbol}</Link>
+                        <div className="text-xs text-muted truncate max-w-[180px]">{l.asset.name}</div>
+                      </td>
+                      <td className="px-3 py-3 text-muted hidden md:table-cell">{l.seller.name}</td>
+                      <td className="px-3 py-3 text-right tnum text-accent">¥{fmtMoney(l.pricePerUnit)}</td>
+                      <td className="px-3 py-3 text-right tnum">{fmtQty(l.quantity)}</td>
+                      <td className="px-3 py-3 text-right tnum text-muted hidden sm:table-cell">{fmtQty(l.minQuantity)}</td>
+                      <td className="px-5 py-3 text-right">
+                        {me?.id === l.sellerId ? (
+                          <CancelListing id={l.id} onDone={load} />
+                        ) : me ? (
+                          <BuyListing listing={l} onDone={load} />
+                        ) : (
+                          <Link href="/login" className="text-xs text-accent">登录购买</Link>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </Reveal>
     </div>
   );
 }
 
 function CreateListing({ assets, onDone }: { assets: Asset[]; onDone: () => void }) {
+  const toast = useToast();
   const [assetId, setAssetId] = useState(assets[0]?.id ?? "");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
@@ -129,6 +134,7 @@ function CreateListing({ assets, onDone }: { assets: Asset[]; onDone: () => void
           minQuantity: Number(minQty) || 1,
         }),
       });
+      toast("ok", "挂牌已发布");
       onDone();
     } catch (e) {
       setErr((e as Error).message);
@@ -173,21 +179,22 @@ function Field({ label, value, onChange, step }: { label: string; value: string;
 }
 
 function BuyListing({ listing, onDone }: { listing: Listing; onDone: () => void }) {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [qty, setQty] = useState(String(listing.minQuantity));
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
 
   if (!open) return <button onClick={() => setOpen(true)} className="text-xs px-3 py-1 rounded bg-up text-background font-medium">购买</button>;
 
   async function buy() {
-    setBusy(true); setErr("");
+    setBusy(true);
     try {
       await api(`/api/otc/${listing.id}/buy`, { method: "POST", body: JSON.stringify({ quantity: Number(qty) }) });
+      toast("ok", `已购买 ${qty} 吨`);
       setOpen(false);
       onDone();
     } catch (e) {
-      setErr((e as Error).message);
+      toast("err", (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -201,7 +208,6 @@ function BuyListing({ listing, onDone }: { listing: Listing; onDone: () => void 
         {busy ? "…" : "确认"}
       </button>
       <button onClick={() => setOpen(false)} className="text-xs text-muted px-1">×</button>
-      {err && <span className="text-down text-xs ml-1">{err}</span>}
     </div>
   );
 }
