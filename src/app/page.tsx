@@ -8,6 +8,7 @@ import { Sparkline } from "@/components/charts/Sparkline";
 import { FlashCell } from "@/components/anim/FlashCell";
 import { ParticleHero } from "@/components/anim/ParticleHero";
 import { PixelMorphEntry } from "@/components/rating/PixelMorphEntry";
+import { useT } from "@/lib/i18n";
 
 type Asset = {
   id: string;
@@ -25,9 +26,47 @@ type Asset = {
   spark: number[];
 };
 
-const HERO_LINES = ["让每一吨碳", "都有公允的价格"];
+const DICT = {
+  en: {
+    kicker: "Carbadia · Carbon Credit Exchange · Demo",
+    heroLines: ["A fair price for", "every tonne of carbon"],
+    heroSubtitle:
+      "Trade verified carbon reductions. Order-book matched standardized spot, OTC listings for block trades — clear, transparent, settled in one place.",
+    startTrading: "Start trading",
+    browseOtc: "Browse OTC →",
+    spotMarket: "Spot market",
+    instrumentsMeta: (n: number) => `${n} instruments · live demo data`,
+    loading: "Loading…",
+    thSymbolProject: "Symbol / Project",
+    thStandard: "Standard",
+    thLastPrice: "Last price",
+    thChange24h: "24h change",
+    thTrend24h: "24h trend",
+    thBidAsk: "Bid / Ask",
+    thVolume24h: "24h volume (t)",
+  },
+  zh: {
+    kicker: "Carbadia · 碳信用交易所 · 模拟盘",
+    heroLines: ["让每一吨碳", "都有公允的价格"],
+    heroSubtitle:
+      "交易经核证的碳减排量。订单簿撮合的标准化现货，面向大宗的 OTC 挂牌，清晰透明，一处成交。",
+    startTrading: "开始交易",
+    browseOtc: "浏览 OTC 挂牌 →",
+    spotMarket: "现货行情",
+    instrumentsMeta: (n: number) => `${n} 个标的 · 实时模拟行情`,
+    loading: "加载中…",
+    thSymbolProject: "代码 / 项目",
+    thStandard: "标准",
+    thLastPrice: "最新价",
+    thChange24h: "24h 涨跌",
+    thTrend24h: "24h 走势",
+    thBidAsk: "买一 / 卖一",
+    thVolume24h: "24h 量(吨)",
+  },
+};
 
 export default function Home() {
+  const t = useT(DICT);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -57,10 +96,10 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          Carbadia · 碳信用交易所 · 模拟盘
+          {t.kicker}
         </motion.p>
         <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight leading-[1.05] mb-6">
-          {HERO_LINES.map((line, li) => (
+          {t.heroLines.map((line, li) => (
             <span key={li} className="block">
               {[...line].map((ch, i) => (
                 <motion.span
@@ -82,8 +121,7 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: reduced ? 0 : 0.9, duration: 0.5 }}
         >
-          交易经核证的碳减排量。订单簿撮合的标准化现货，面向大宗的 OTC 挂牌，
-          清晰透明，一处成交。
+          {t.heroSubtitle}
         </motion.p>
         <motion.div
           className="flex flex-wrap gap-3 justify-center mt-9"
@@ -96,7 +134,7 @@ export default function Home() {
               href="/portfolio"
               className="inline-block px-6 py-3 rounded-full bg-accent text-background font-medium hover:bg-accent-strong transition-colors"
             >
-              开始交易
+              {t.startTrading}
             </Link>
           </motion.span>
           <motion.span whileHover={reduced ? undefined : { scale: 1.04 }} whileTap={{ scale: 0.97 }}>
@@ -104,7 +142,7 @@ export default function Home() {
               href="/otc"
               className="inline-block px-6 py-3 rounded-full bg-surface-2 text-foreground font-medium hover:bg-border/60 transition-colors"
             >
-              浏览 OTC 挂牌 →
+              {t.browseOtc}
             </Link>
           </motion.span>
         </motion.div>
@@ -116,11 +154,11 @@ export default function Home() {
 
       <section className="rounded-2xl border border-border bg-surface shadow-card overflow-hidden">
         <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-          <h2 className="font-semibold">现货行情</h2>
-          <span className="text-xs text-muted">{assets.length} 个标的 · 实时模拟行情</span>
+          <h2 className="font-semibold">{t.spotMarket}</h2>
+          <span className="text-xs text-muted">{t.instrumentsMeta(assets.length)}</span>
         </div>
         {loading ? (
-          <div className="p-8 text-center text-muted">加载中…</div>
+          <div className="p-8 text-center text-muted">{t.loading}</div>
         ) : err ? (
           <div className="p-8 text-center text-down">{err}</div>
         ) : (
@@ -128,13 +166,13 @@ export default function Home() {
             <table className="w-full text-sm">
               <thead className="text-muted text-xs">
                 <tr className="border-b border-border">
-                  <th className="text-left font-medium px-5 py-3">代码 / 项目</th>
-                  <th className="text-left font-medium px-3 py-3 hidden md:table-cell">标准</th>
-                  <th className="text-right font-medium px-3 py-3">最新价</th>
-                  <th className="text-right font-medium px-3 py-3">24h 涨跌</th>
-                  <th className="text-center font-medium px-3 py-3 hidden lg:table-cell">24h 走势</th>
-                  <th className="text-right font-medium px-3 py-3 hidden sm:table-cell">买一 / 卖一</th>
-                  <th className="text-right font-medium px-5 py-3">24h 量(吨)</th>
+                  <th className="text-left font-medium px-5 py-3">{t.thSymbolProject}</th>
+                  <th className="text-left font-medium px-3 py-3 hidden md:table-cell">{t.thStandard}</th>
+                  <th className="text-right font-medium px-3 py-3">{t.thLastPrice}</th>
+                  <th className="text-right font-medium px-3 py-3">{t.thChange24h}</th>
+                  <th className="text-center font-medium px-3 py-3 hidden lg:table-cell">{t.thTrend24h}</th>
+                  <th className="text-right font-medium px-3 py-3 hidden sm:table-cell">{t.thBidAsk}</th>
+                  <th className="text-right font-medium px-5 py-3">{t.thVolume24h}</th>
                 </tr>
               </thead>
               <tbody>

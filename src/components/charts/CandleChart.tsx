@@ -4,6 +4,28 @@ import { useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { Candle } from "@/lib/candles";
 import { fmtMoney, fmtQty } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+
+const DICT = {
+  en: {
+    waiting: "Waiting for market data…",
+    open: "Open",
+    high: "High",
+    low: "Low",
+    close: "Close",
+    vol: "Vol",
+    candles: (n: number) => `${n} candles`,
+  },
+  zh: {
+    waiting: "暂无成交数据，等待行情…",
+    open: "开",
+    high: "高",
+    low: "低",
+    close: "收",
+    vol: "量",
+    candles: (n: number) => `${n} 根 K 线`,
+  },
+};
 
 const W = 760;
 const H = 360;
@@ -13,6 +35,7 @@ const PAD_T = 26;
 const PAD_B = 8;
 
 export function CandleChart({ candles, lastPrice }: { candles: Candle[]; lastPrice: number | null }) {
+  const t = useT(DICT);
   const reduced = useReducedMotion();
   const [hover, setHover] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -45,7 +68,7 @@ export function CandleChart({ candles, lastPrice }: { candles: Candle[]; lastPri
   }, [candles]);
 
   if (!view) {
-    return <div className="h-[360px] flex items-center justify-center text-muted text-sm">暂无成交数据，等待行情…</div>;
+    return <div className="h-[360px] flex items-center justify-center text-muted text-sm">{t.waiting}</div>;
   }
 
   const { x, y, vy, bw } = view;
@@ -64,14 +87,14 @@ export function CandleChart({ candles, lastPrice }: { candles: Candle[]; lastPri
         {hc ? (
           <>
             <span>{new Date(hc.t).toLocaleString("zh-CN", { hour12: false })}</span>
-            <span>开 {fmtMoney(hc.o)}</span>
-            <span className="text-up">高 {fmtMoney(hc.h)}</span>
-            <span className="text-down">低 {fmtMoney(hc.l)}</span>
-            <span>收 {fmtMoney(hc.c)}</span>
-            <span>量 {fmtQty(hc.v)}</span>
+            <span>{t.open} {fmtMoney(hc.o)}</span>
+            <span className="text-up">{t.high} {fmtMoney(hc.h)}</span>
+            <span className="text-down">{t.low} {fmtMoney(hc.l)}</span>
+            <span>{t.close} {fmtMoney(hc.c)}</span>
+            <span>{t.vol} {fmtQty(hc.v)}</span>
           </>
         ) : (
-          <span>{candles.length} 根 K 线</span>
+          <span>{t.candles(candles.length)}</span>
         )}
       </div>
       <svg

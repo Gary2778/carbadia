@@ -5,6 +5,82 @@ import Link from "next/link";
 import { api, fmtMoney, fmtQty, fmtTime } from "@/lib/format";
 import { NumberTicker } from "@/components/anim/NumberTicker";
 import { Reveal } from "@/components/anim/Reveal";
+import { useT } from "@/lib/i18n";
+
+const DICT = {
+  en: {
+    goToLogin: "Go to log in",
+    loading: "Loading…",
+    myPortfolio: "My Portfolio",
+    totalAssets: "Total assets",
+    availableCash: "Available cash",
+    lockedCash: "Locked cash",
+    holdingsValue: "Holdings value",
+    holdings: "Holdings",
+    noHoldings: "No holdings yet",
+    instrument: "Instrument",
+    qtyTonnes: "Quantity (t)",
+    locked: "Locked",
+    lastPrice: "Last price",
+    marketValue: "Market value",
+    openOrders: "Open orders",
+    noOpenOrders: "No open orders",
+    side: "Side",
+    type: "Type",
+    price: "Price",
+    filledTotal: "Filled/Total",
+    action: "Action",
+    buy: "Buy",
+    sell: "Sell",
+    limit: "Limit",
+    market: "Market",
+    cancel: "Cancel",
+    myOtcListings: "My OTC listings",
+    unitPrice: "Unit price",
+    availableTonnes: "Available (t)",
+    cancelListing: "Cancel",
+    tradeHistory: "Trade history",
+    noTrades: "No trades yet",
+    time: "Time",
+    amount: "Amount",
+  },
+  zh: {
+    goToLogin: "前往登录",
+    loading: "加载中…",
+    myPortfolio: "我的资产",
+    totalAssets: "总资产估值",
+    availableCash: "可用现金",
+    lockedCash: "冻结现金",
+    holdingsValue: "持仓市值",
+    holdings: "持仓",
+    noHoldings: "暂无持仓",
+    instrument: "标的",
+    qtyTonnes: "数量(吨)",
+    locked: "冻结",
+    lastPrice: "最新价",
+    marketValue: "市值",
+    openOrders: "当前委托",
+    noOpenOrders: "无未完成委托",
+    side: "方向",
+    type: "类型",
+    price: "价格",
+    filledTotal: "已成交/总量",
+    action: "操作",
+    buy: "买入",
+    sell: "卖出",
+    limit: "限价",
+    market: "市价",
+    cancel: "撤单",
+    myOtcListings: "我的 OTC 挂牌",
+    unitPrice: "单价",
+    availableTonnes: "可售(吨)",
+    cancelListing: "撤销",
+    tradeHistory: "成交历史",
+    noTrades: "暂无成交",
+    time: "时间",
+    amount: "金额",
+  },
+};
 
 type Portfolio = {
   cashBalance: number;
@@ -18,6 +94,7 @@ type Portfolio = {
 };
 
 export default function PortfolioPage() {
+  const t = useT(DICT);
   const [p, setP] = useState<Portfolio | null>(null);
   const [err, setErr] = useState("");
 
@@ -38,28 +115,28 @@ export default function PortfolioPage() {
   if (err) return (
     <div className="text-center py-16 space-y-3">
       <div className="text-muted">{err}</div>
-      <Link href="/login" className="text-accent">前往登录 →</Link>
+      <Link href="/login" className="text-accent">{t.goToLogin} →</Link>
     </div>
   );
-  if (!p) return <div className="text-muted text-center py-16">加载中…</div>;
+  if (!p) return <div className="text-muted text-center py-16">{t.loading}</div>;
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-bold">我的资产</h1>
+      <h1 className="text-xl font-bold">{t.myPortfolio}</h1>
 
       <Reveal>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Stat label="总资产估值" value={p.totalAssets} accent />
-          <Stat label="可用现金" value={p.cashBalance} />
-          <Stat label="冻结现金" value={p.lockedCash} />
-          <Stat label="持仓市值" value={p.holdingsValue} />
+          <Stat label={t.totalAssets} value={p.totalAssets} accent />
+          <Stat label={t.availableCash} value={p.cashBalance} />
+          <Stat label={t.lockedCash} value={p.lockedCash} />
+          <Stat label={t.holdingsValue} value={p.holdingsValue} />
         </div>
       </Reveal>
 
       <Reveal delay={0.05}>
-        <Card title="持仓">
-          {p.positions.length === 0 ? <Empty text="暂无持仓" /> : (
-            <Table head={["标的", "数量(吨)", "冻结", "最新价", "市值"]}>
+        <Card title={t.holdings}>
+          {p.positions.length === 0 ? <Empty text={t.noHoldings} /> : (
+            <Table head={[t.instrument, t.qtyTonnes, t.locked, t.lastPrice, t.marketValue]}>
               {p.positions.map((h) => (
                 <tr key={h.assetId} className="border-b border-border/40 hover:bg-surface-2">
                   <td className="px-4 py-2.5">
@@ -78,20 +155,20 @@ export default function PortfolioPage() {
       </Reveal>
 
       <Reveal delay={0.1}>
-        <Card title="当前委托">
-          {p.openOrders.length === 0 ? <Empty text="无未完成委托" /> : (
-            <Table head={["标的", "方向", "类型", "价格", "已成交/总量", "操作"]}>
+        <Card title={t.openOrders}>
+          {p.openOrders.length === 0 ? <Empty text={t.noOpenOrders} /> : (
+            <Table head={[t.instrument, t.side, t.type, t.price, t.filledTotal, t.action]}>
               {p.openOrders.map((o) => (
                 <tr key={o.id} className="border-b border-border/40">
                   <td className="px-4 py-2.5 font-medium">{o.asset.symbol}</td>
-                  <td className={`px-3 py-2.5 font-medium ${o.side === "BUY" ? "text-up" : "text-down"}`}>{o.side === "BUY" ? "买入" : "卖出"}</td>
-                  <td className="px-3 py-2.5 text-muted">{o.type === "LIMIT" ? "限价" : "市价"}</td>
-                  <td className="px-3 py-2.5 text-right tnum">{o.price == null ? "市价" : fmtMoney(o.price)}</td>
+                  <td className={`px-3 py-2.5 font-medium ${o.side === "BUY" ? "text-up" : "text-down"}`}>{o.side === "BUY" ? t.buy : t.sell}</td>
+                  <td className="px-3 py-2.5 text-muted">{o.type === "LIMIT" ? t.limit : t.market}</td>
+                  <td className="px-3 py-2.5 text-right tnum">{o.price == null ? t.market : fmtMoney(o.price)}</td>
                   <td className="px-3 py-2.5 text-right tnum">{fmtQty(o.filledQuantity)} / {fmtQty(o.quantity)}</td>
                   <td className="px-4 py-2.5 text-right">
                     <button
                       onClick={async () => { try { await api(`/api/orders/${o.id}`, { method: "DELETE" }); load(); } catch {} }}
-                      className="text-xs text-muted hover:text-down">撤单</button>
+                      className="text-xs text-muted hover:text-down">{t.cancel}</button>
                   </td>
                 </tr>
               ))}
@@ -102,8 +179,8 @@ export default function PortfolioPage() {
 
       {p.otcListings.length > 0 && (
         <Reveal delay={0.15}>
-          <Card title="我的 OTC 挂牌">
-            <Table head={["标的", "单价", "可售(吨)", "操作"]}>
+          <Card title={t.myOtcListings}>
+            <Table head={[t.instrument, t.unitPrice, t.availableTonnes, t.action]}>
               {p.otcListings.map((l) => (
                 <tr key={l.id} className="border-b border-border/40">
                   <td className="px-4 py-2.5 font-medium">{l.asset.symbol}</td>
@@ -111,7 +188,7 @@ export default function PortfolioPage() {
                   <td className="px-3 py-2.5 text-right tnum">{fmtQty(l.quantity)}</td>
                   <td className="px-4 py-2.5 text-right">
                     <button onClick={async () => { try { await api(`/api/otc/${l.id}`, { method: "DELETE" }); load(); } catch {} }}
-                      className="text-xs text-muted hover:text-down">撤销</button>
+                      className="text-xs text-muted hover:text-down">{t.cancelListing}</button>
                   </td>
                 </tr>
               ))}
@@ -121,17 +198,17 @@ export default function PortfolioPage() {
       )}
 
       <Reveal delay={0.2}>
-        <Card title="成交历史">
-          {p.trades.length === 0 ? <Empty text="暂无成交" /> : (
-            <Table head={["时间", "标的", "方向", "价格", "数量(吨)", "金额"]}>
-              {p.trades.map((t) => (
-                <tr key={t.id} className="border-b border-border/40">
-                  <td className="px-4 py-2.5 text-muted text-xs">{fmtTime(t.createdAt)}</td>
-                  <td className="px-3 py-2.5 font-medium">{t.asset.symbol}</td>
-                  <td className={`px-3 py-2.5 font-medium ${t.direction === "BUY" ? "text-up" : "text-down"}`}>{t.direction === "BUY" ? "买入" : "卖出"}</td>
-                  <td className="px-3 py-2.5 text-right tnum">{fmtMoney(t.price)}</td>
-                  <td className="px-3 py-2.5 text-right tnum">{fmtQty(t.quantity)}</td>
-                  <td className="px-4 py-2.5 text-right tnum">¥{fmtMoney(t.price * t.quantity)}</td>
+        <Card title={t.tradeHistory}>
+          {p.trades.length === 0 ? <Empty text={t.noTrades} /> : (
+            <Table head={[t.time, t.instrument, t.side, t.price, t.qtyTonnes, t.amount]}>
+              {p.trades.map((tr) => (
+                <tr key={tr.id} className="border-b border-border/40">
+                  <td className="px-4 py-2.5 text-muted text-xs">{fmtTime(tr.createdAt)}</td>
+                  <td className="px-3 py-2.5 font-medium">{tr.asset.symbol}</td>
+                  <td className={`px-3 py-2.5 font-medium ${tr.direction === "BUY" ? "text-up" : "text-down"}`}>{tr.direction === "BUY" ? t.buy : t.sell}</td>
+                  <td className="px-3 py-2.5 text-right tnum">{fmtMoney(tr.price)}</td>
+                  <td className="px-3 py-2.5 text-right tnum">{fmtQty(tr.quantity)}</td>
+                  <td className="px-4 py-2.5 text-right tnum">¥{fmtMoney(tr.price * tr.quantity)}</td>
                 </tr>
               ))}
             </Table>

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { fmtMoney, fmtQty } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 
 type Level = { price: number; quantity: number };
 type CumLevel = { price: number; quantity: number; cum: number };
@@ -11,7 +12,29 @@ const W = 760;
 const H = 300;
 const PAD = 16;
 
+const DICT = {
+  en: {
+    noOrders: "No orders",
+    price: "Price",
+    size: "Size",
+    cumulative: "Cumulative",
+    tonnes: "t",
+    spread: "Spread",
+    depth: "Order-book depth",
+  },
+  zh: {
+    noOrders: "暂无挂单",
+    price: "价",
+    size: "档量",
+    cumulative: "累计",
+    tonnes: "吨",
+    spread: "价差",
+    depth: "买卖盘深度",
+  },
+};
+
 export function DepthChart({ bids, asks }: { bids: Level[]; asks: Level[] }) {
+  const t = useT(DICT);
   const reduced = useReducedMotion();
   const [hover, setHover] = useState<CumLevel | null>(null);
 
@@ -45,7 +68,7 @@ export function DepthChart({ bids, asks }: { bids: Level[]; asks: Level[] }) {
     };
   }, [bids, asks]);
 
-  if (!view) return <div className="h-[300px] flex items-center justify-center text-muted text-sm">暂无挂单</div>;
+  if (!view) return <div className="h-[300px] flex items-center justify-center text-muted text-sm">{t.noOrders}</div>;
 
   const { cumBids, cumAsks, x, y } = view;
 
@@ -83,14 +106,14 @@ export function DepthChart({ bids, asks }: { bids: Level[]; asks: Level[] }) {
       <div className="absolute top-0 left-2 z-10 text-[11px] tnum text-muted flex gap-3 bg-surface/80 backdrop-blur px-2 py-0.5 rounded">
         {hover ? (
           <>
-            <span>价 {fmtMoney(hover.price)}</span>
-            <span>档量 {fmtQty(hover.quantity)}</span>
-            <span>累计 {fmtQty(hover.cum)} 吨</span>
+            <span>{t.price} {fmtMoney(hover.price)}</span>
+            <span>{t.size} {fmtQty(hover.quantity)}</span>
+            <span>{t.cumulative} {fmtQty(hover.cum)} {t.tonnes}</span>
           </>
         ) : spread != null ? (
-          <span>价差 {fmtMoney(spread)}</span>
+          <span>{t.spread} {fmtMoney(spread)}</span>
         ) : (
-          <span>买卖盘深度</span>
+          <span>{t.depth}</span>
         )}
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full select-none" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>

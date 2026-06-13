@@ -4,8 +4,35 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+
+const DICT = {
+  en: {
+    title: "Log in",
+    subtitle: "Log in to start trading carbon credits",
+    email: "Email",
+    password: "Password",
+    loggingIn: "Logging in…",
+    login: "Log in",
+    noAccount: "Don't have an account?",
+    signUp: "Sign up",
+    demoAccount: "Demo accounts",
+  },
+  zh: {
+    title: "登录",
+    subtitle: "登录后开始交易碳信用",
+    email: "邮箱",
+    password: "密码",
+    loggingIn: "登录中…",
+    login: "登录",
+    noAccount: "还没有账号？",
+    signUp: "注册",
+    demoAccount: "演示账号",
+  },
+};
 
 export default function LoginPage() {
+  const t = useT(DICT);
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,21 +55,21 @@ export default function LoginPage() {
   return (
     <div className="max-w-sm mx-auto mt-10">
       <div className="rounded-2xl border border-border bg-surface shadow-card p-6">
-        <h1 className="text-lg font-bold mb-1">登录</h1>
-        <p className="text-muted text-sm mb-5">登录后开始交易碳信用</p>
+        <h1 className="text-lg font-bold mb-1">{t.title}</h1>
+        <p className="text-muted text-sm mb-5">{t.subtitle}</p>
         <form onSubmit={submit} className="space-y-3">
-          <Input label="邮箱" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
-          <Input label="密码" type="password" value={password} onChange={setPassword} placeholder="••••••" />
+          <Input label={t.email} type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
+          <Input label={t.password} type="password" value={password} onChange={setPassword} placeholder="••••••" />
           {err && <div className="text-down text-xs">{err}</div>}
           <button disabled={busy} className="w-full py-2.5 rounded-full bg-accent text-background font-medium hover:bg-accent-strong transition-colors disabled:opacity-40">
-            {busy ? "登录中…" : "登录"}
+            {busy ? t.loggingIn : t.login}
           </button>
         </form>
         <div className="text-sm text-muted mt-4 text-center">
-          还没有账号？<Link href="/register" className="text-accent">注册</Link>
+          {t.noAccount}<Link href="/register" className="text-accent">{t.signUp}</Link>
         </div>
         <div className="mt-4 pt-4 border-t border-border text-xs text-muted space-y-1">
-          <div className="font-medium text-foreground">演示账号</div>
+          <div className="font-medium text-foreground">{t.demoAccount}</div>
           <div>alice@carbonex.io / password123</div>
           <div>bob@carbonex.io / password123</div>
         </div>
