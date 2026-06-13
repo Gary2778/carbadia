@@ -1,0 +1,208 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef } from "react";
+import { useReducedMotion } from "motion/react";
+import { useRatingTransition, type Pt } from "./PixelTransition";
+
+const ZH = "碳信用评级";
+const EN = "CARBON RATING";
+const GAP = 8;
+const SQ = 6;
+const GREEN = "#0a8a52";
+const GLOW = "#16d97f";
+const FONT = (fs: number) => `700 ${fs}px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif`;
+
+type Particle = {
+  cx: number; cy: number; ex: number; ey: number;
+  dirx: number; diry: number; ph: number; };
+
+const easeIO = (x: number) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+
+function sample(text: string, fs: number) {
+  const off = document.createElement("canvas");
+  const o = off.getContext("2d");
+  if (!o) return { pts: [] as number[][], tw: 0, th: 0 };
+  o.font = FONT(fs);
+  const tw = Math.ceil(o.measureText(text).width);
+  const th = Math.ceil(fs * 1.3);
+  off.width = tw;
+  off.height = th;
+  o.font = FONT(fs);
+  o.fillStyle = "#000";
+  o.textBaseline = "middle";
+  o.textAlign = "left";
+  o.fillText(text, 0, th / 2);
+  const d = o.getImageData(0, 0, tw, th).data;
+  const pts: number[][] = [];
+  for (let y = 0; y < th; y += GAP) for (let x = 0; x < tw; x += GAP) if (d[(y * tw + x) * 4 + 3] > 110) pts.push([x, y]);
+  return { pts, tw, th };
+}
+
+export function PixelMorphEntry() {
+  const reduced = useReducedMotion();
+  const { enter } = useRatingTransition();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const raf = useRef(0);
+  const st = useRef({
+    parts: [] as Particle[],
+    W: 0, H: 0, zhFont: "",
+    h: 0, hoverT: 0, t: 0, mouseX: -999, mouseY: -999,
+  });
+
+  useEffect(() => {
+    if (reduced) return;
+    const cvs = canvasRef.current;
+    if (!cvs) return;
+    const ctx = cvs.getContext("2d");
+    if (!ctx) return;
+    const s = st.current;
+
+    const build = () => {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const W = cvs.clientWidth;
+      const H = cvs.clientHeight;
+      cvs.width = W * dpr;
+      cvs.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      s.W = W;
+      s.H = H;
+      const zhFS = Math.max(40, Math.min(96, W / (ZH.length + 0.6)));
+      s.zhFont = FONT(zhFS);
+      const enFS = Math.max(34, Math.min(72, W / (EN.length * 0.62)));
+      const E = sample(EN, enFS);
+      const Z = sample(ZH, zhFS);
+      const exo = (W - E.tw) / 2, eyo = (H - E.th) / 2, zxo = (W - Z.tw) / 2, zyo = (H - Z.th) / 2;
+      const cx = W / 2, cy = H / 2;
+      s.parts = E.pts.map((p, i) => {
+        const z = Z.pts[i % Math.max(1, Z.pts.length)] ?? p;
+        const ex = exo + p[0], ey = eyo + p[1];
+        const dx = ex - cx, dy = ey - cy, m = Math.hypot(dx, dy) || 1;
+        return { cx: zxo + z[0], cy: zyo + z[1], ex, ey, dirx: dx / m, diry: dy / m, ph: Math.random() * 6.28 };
+      });
+    };
+
+    const curPos = (p: Particle) => {
+      const e = easeIO(clamp(s.h, 0, 1));
+      const scat = Math.sin(clamp(s.h, 0, 1) * Math.PI) * 22;
+      const br = clamp((s.h - 0.12) / 0.4, 0, 1);
+      const ox = Math.sin(s.t * 1.7 + p.ph) * 1.6 * br;
+      const oy = Math.cos(s.t * 1.7 + p.ph) * 1.6 * br;
+      return { x: p.cx + (p.ex - p.cx) * e + p.dirx * scat + ox, y: p.cy + (p.ey - p.cy) * e + p.diry * scat + oy };
+    };
+
+    const frame = () => {
+      s.t += 0.05;
+      s.h += (s.hoverT - s.h) * 0.07;
+      ctx.clearRect(0, 0, s.W, s.H);
+      const zhA = 1 - clamp(s.h / 0.32, 0, 1);
+      if (zhA > 0) {
+        ctx.globalAlpha = zhA;
+        ctx.fillStyle = GREEN;
+        ctx.font = s.zhFont;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(ZH, s.W / 2, s.H / 2);
+        ctx.globalAlpha = 1;
+      }
+      const pA = clamp((s.h - 0.1) / 0.4, 0, 1);
+      if (pA > 0) {
+        const full = s.h > 0.85;
+        const R = 104, R2 = R * R;
+        for (const p of s.parts) {
+          const c = curPos(p);
+          let infl = 0, px = c.x, py = c.y;
+          const dx = c.x - s.mouseX, dy = c.y - s.mouseY, d2 = dx * dx + dy * dy;
+          if (d2 < R2) {
+            const d = Math.sqrt(d2) || 1;
+            infl = 1 - d / R;
+            infl *= infl;
+            const push = infl * 18;
+            px += (dx / d) * push;
+            py += (dy / d) * push;
+          }
+          const tw = (Math.sin(s.t * 1.7 + p.ph) + 1) / 2;
+          ctx.globalAlpha = clamp(pA * (0.72 + 0.28 * tw) + infl * 0.5, 0, 1);
+          ctx.fillStyle = full || infl > 0.22 ? GLOW : GREEN;
+          const sz = SQ + (full ? tw * 1.2 : 0) + infl * 3;
+          ctx.fillRect(px - (sz - SQ) / 2, py - (sz - SQ) / 2, sz, sz);
+        }
+        ctx.globalAlpha = 1;
+      }
+      raf.current = requestAnimationFrame(frame);
+    };
+
+    const onMove = (e: MouseEvent) => {
+      const r = cvs.getBoundingClientRect();
+      s.mouseX = e.clientX - r.left;
+      s.mouseY = e.clientY - r.top;
+      s.hoverT = s.mouseY > s.H * 0.12 && s.mouseY < s.H * 0.88 ? 1 : 0;
+    };
+    const onLeave = () => {
+      s.hoverT = 0;
+      s.mouseX = -999;
+      s.mouseY = -999;
+    };
+    const onVis = () => {
+      if (document.visibilityState === "hidden") {
+        cancelAnimationFrame(raf.current);
+        raf.current = 0;
+      } else if (!raf.current) {
+        raf.current = requestAnimationFrame(frame);
+      }
+    };
+
+    build();
+    raf.current = requestAnimationFrame(frame);
+    const rebuild = () => build();
+    setTimeout(rebuild, 300);
+    cvs.addEventListener("mousemove", onMove);
+    cvs.addEventListener("mouseleave", onLeave);
+    window.addEventListener("resize", rebuild);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      cancelAnimationFrame(raf.current);
+      cvs.removeEventListener("mousemove", onMove);
+      cvs.removeEventListener("mouseleave", onLeave);
+      window.removeEventListener("resize", rebuild);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [reduced]);
+
+  function onClick(e: React.MouseEvent) {
+    if (reduced) return; // 让 <Link> 正常跳转
+    e.preventDefault();
+    const cvs = canvasRef.current;
+    const s = st.current;
+    if (!cvs || s.parts.length === 0) {
+      enter({ points: [], click: { x: e.clientX, y: e.clientY } });
+      return;
+    }
+    s.h = Math.max(s.h, 0.9);
+    const r = cvs.getBoundingClientRect();
+    const e2 = easeIO(clamp(s.h, 0, 1));
+    const points: Pt[] = s.parts.map((p) => ({
+      x: r.left + p.cx + (p.ex - p.cx) * e2,
+      y: r.top + p.cy + (p.ey - p.cy) * e2,
+    }));
+    enter({ points, click: { x: e.clientX, y: e.clientY } });
+  }
+
+  if (reduced) {
+    return (
+      <Link
+        href="/rating"
+        className="inline-block tnum font-semibold text-2xl text-accent hover:text-accent-strong transition-colors"
+      >
+        碳信用评级 →
+      </Link>
+    );
+  }
+
+  return (
+    <Link href="/rating" onClick={onClick} aria-label="碳信用评级服务" className="block w-full max-w-[440px] mx-auto">
+      <canvas ref={canvasRef} className="block w-full h-[140px] cursor-pointer" />
+    </Link>
+  );
+}

@@ -7,6 +7,7 @@ import { api, fmtMoney, fmtQty } from "@/lib/format";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { FlashCell } from "@/components/anim/FlashCell";
 import { ParticleHero } from "@/components/anim/ParticleHero";
+import { PixelMorphEntry } from "@/components/rating/PixelMorphEntry";
 
 type Asset = {
   id: string;
@@ -107,6 +108,12 @@ export default function Home() {
             </Link>
           </motion.span>
         </motion.div>
+      </section>
+
+      <section className="text-center py-4">
+        <p className="font-mono text-[11px] tracking-[0.3em] text-accent mb-1">CARBADIA · 独家服务</p>
+        <PixelMorphEntry />
+        <p className="text-muted text-sm -mt-1">独立碳信用评级 · 悬停唤醒 · 点击进入</p>
       </section>
 
       <section className="rounded-2xl border border-border bg-surface shadow-card overflow-hidden">
