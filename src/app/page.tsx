@@ -9,7 +9,9 @@ import { FlashCell } from "@/components/anim/FlashCell";
 import { ParticleHero } from "@/components/anim/ParticleHero";
 import { PixelMorphEntry } from "@/components/rating/PixelMorphEntry";
 import { SoccerBall } from "@/components/SoccerBall";
+import { RansomText, ransomParts } from "@/components/RansomText";
 import { useT, useLang } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 
 type Asset = {
   id: string;
@@ -69,6 +71,8 @@ const DICT = {
 export default function Home() {
   const t = useT(DICT);
   const { lang } = useLang();
+  const { theme } = useTheme();
+  const dark = theme === "dark";
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -101,26 +105,43 @@ export default function Home() {
         >
           {t.kicker}
         </motion.p>
-        <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight leading-[1.05] mb-6">
+        <h1 className={`text-5xl sm:text-6xl font-semibold tracking-tight leading-[1.05] mb-6 ${dark ? "ransom-line" : ""}`}>
           {t.heroLines.map((line, li) => (
-            <span key={`${lang}-${li}`} className="block">
-              {[...line].map((ch, i) =>
-                ch === " " ? (
+            // key 含 lang+theme：切换语言或主题时整体重挂载，每个字重放逐字动画
+            <span key={`${lang}-${theme}-${li}`} className="block">
+              {[...line].map((ch, i) => {
+                if (ch === " ")
                   // 空格保留为可换行的真实空白（英文标题词间距），不套 inline-block 以免被折叠
-                  <span key={`${lang}-${i}`}>{" "}</span>
-                ) : (
-                  // key 含 lang：切换语言时整体重挂载，每个字都重放逐字动画
+                  return <span key={`${lang}-${theme}-${i}`}>{" "}</span>;
+                const delay = reduced ? 0 : 0.06 * (li * line.length + i) + 0.15;
+                if (dark) {
+                  // 深色：每个字是一张"剪报纸片"，倾斜/纸色稳定，逐字弹入归位
+                  const p = ransomParts(line, i);
+                  return (
+                    <motion.span
+                      key={`${lang}-${theme}-${i}`}
+                      className="ransom-letter inline-block"
+                      style={{ background: p.bg, color: p.fg, fontFamily: p.font }}
+                      initial={reduced ? false : { opacity: 0, y: 26, rotate: p.rot - 6, scale: p.scale * 0.8 }}
+                      animate={{ opacity: 1, y: 0, rotate: p.rot, scale: p.scale }}
+                      transition={{ delay, duration: 0.55, ease: [0.21, 0.7, 0.3, 1] }}
+                    >
+                      {ch}
+                    </motion.span>
+                  );
+                }
+                return (
                   <motion.span
-                    key={`${lang}-${i}`}
+                    key={`${lang}-${theme}-${i}`}
                     className="inline-block"
                     initial={reduced ? false : { opacity: 0, y: 26 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: reduced ? 0 : 0.06 * (li * line.length + i) + 0.15, duration: 0.55, ease: [0.21, 0.7, 0.3, 1] }}
+                    transition={{ delay, duration: 0.55, ease: [0.21, 0.7, 0.3, 1] }}
                   >
                     {ch}
                   </motion.span>
-                )
-              )}
+                );
+              })}
             </span>
           ))}
         </h1>
@@ -163,7 +184,9 @@ export default function Home() {
 
       <section className="rounded-2xl border border-border bg-surface shadow-card overflow-hidden">
         <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-          <h2 className="font-semibold">{t.spotMarket}</h2>
+          <h2 className="font-semibold">
+            <RansomText text={t.spotMarket} />
+          </h2>
           <span className="text-xs text-muted">{t.instrumentsMeta(assets.length)}</span>
         </div>
         {loading ? (

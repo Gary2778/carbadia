@@ -66,3 +66,75 @@ h3 {
   font-family: var(--font-mono);
   letter-spacing: 0;
 }
+
+/* ── Dark 模式（默认）：Peppa 星空夜色 ───────────────────────────── */
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] {
+  --background: #0c1330;
+  --surface: #141b3d;
+  --surface-2: #1d2552;
+  --border: #2c3568;
+  --foreground: #f2f5ff;
+  --muted: #aab2e0;
+  --up: #34d399;
+  --down: #fb7185;
+  --accent: #2ee27f;
+  --accent-strong: #1fcf6e;
+}
+
+/* 夜空底色：上深下浅的靛蓝渐变 + 右上方一抹紫光晕；卡通星星/弯月/山丘由 StarrySky 叠加 */
+html[data-theme="dark"] body {
+  background-color: #0a1130;
+  background-image:
+    radial-gradient(60rem 42rem at 82% -6rem, rgba(124, 96, 210, 0.28), transparent 70%),
+    linear-gradient(180deg, #080d28 0%, #0b1336 46%, #122a4c 100%);
+  background-size: 100% 100%, 100% 100%;
+  background-position: 0 0, 0 0;
+  background-attachment: fixed;
+  background-repeat: no-repeat, no-repeat;
+}
+
+/* 深色模式下卡片更通透，让星空透出来一点 */
+html[data-theme="dark"] body {
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -20px rgba(0, 0, 0, 0.7);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 22px -12px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Ransom-note 剪报字（仅深色标题）─────────────────────────────── */
+/* 剪报标题：纸片有内边距/阴影/倾斜，给行距留余量，避免上下行咬合 */
+.ransom-line {
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.ransom-letter {
+  display: inline-block;
+  padding: 0.02em 0.16em;
+  margin: 0 0.04em;
+  border-radius: 4px;
+  line-height: 1.04;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  letter-spacing: 0;
+}
+
+/* ── 星星眨眼 ──────────────────────────────────────────────────── */
+@keyframes carbadia-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carbadia-star {
+    animation: none !important;
+    opacity: 0.9;
+  }
+}

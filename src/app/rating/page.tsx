@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { Reveal } from "@/components/anim/Reveal";
 import { useRatingReveal } from "@/components/rating/PixelTransition";
+import { RansomText } from "@/components/RansomText";
 import { useT } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 
 const GRADES: [string, string][] = [
   ["AAA", "#066a3e"],
@@ -131,12 +133,15 @@ const DICT = {
 export default function RatingPage() {
   useRatingReveal();
   const t = useT(DICT);
+  const dark = useTheme().theme === "dark";
 
   return (
     <div className="space-y-10">
       <header className="pt-6">
         <p className="font-mono text-xs tracking-[0.3em] text-accent mb-2">{t.eyebrow}</p>
-        <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight">{t.title}</h1>
+        <h1 className={`text-4xl sm:text-5xl font-semibold tracking-tight ${dark ? "ransom-line" : ""}`}>
+          <RansomText text={t.title} />
+        </h1>
         <p className="text-muted text-lg max-w-2xl mt-4 leading-relaxed">{t.lead}</p>
         <span className="inline-block mt-4 text-xs text-muted bg-surface-2 border border-border rounded-full px-3 py-1">
           {t.disclaimer}

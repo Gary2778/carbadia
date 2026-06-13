@@ -7,6 +7,7 @@ import { motion } from "motion/react";
 import { api } from "@/lib/format";
 import { NumberTicker } from "@/components/anim/NumberTicker";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useT } from "@/lib/i18n";
 
 type Me = { id: string; name: string; email: string; cashBalance: number; lockedCash: number } | null;
@@ -107,6 +108,7 @@ export function Nav() {
           })}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
+          <ThemeToggle />
           <LanguageToggle />
           {!loaded ? null : me ? (
             <>
