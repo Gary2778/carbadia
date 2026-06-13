@@ -8,6 +8,7 @@ import { Sparkline } from "@/components/charts/Sparkline";
 import { FlashCell } from "@/components/anim/FlashCell";
 import { ParticleHero } from "@/components/anim/ParticleHero";
 import { PixelMorphEntry } from "@/components/rating/PixelMorphEntry";
+import { SoccerBall } from "@/components/SoccerBall";
 import { useT, useLang } from "@/lib/i18n";
 
 type Asset = {
@@ -89,6 +90,7 @@ export default function Home() {
 
   return (
     <div className="space-y-10">
+      <SoccerBall />
       <section className="relative text-center pt-12 pb-6 sm:pt-20 sm:pb-10">
         <ParticleHero />
         <motion.p
