@@ -10,8 +10,8 @@ type Origin = { points: Pt[]; click: Pt };
 
 const GREEN = "#0a8a52";
 const GLOW = "#16d97f";
-// 深色模式:覆盖层由不同深浅的紫色方块拼成(由深到浅)
-const PURPLES = ["#2c1a52", "#3b2470", "#4c2f93", "#5d3bb5", "#6f49d6", "#8159ee", "#9a72ff"];
+// 深色模式:统一的紫色覆盖层(粒子高光用更亮的一档)
+const PURPLE = "#6d3fc4";
 const PURPLE_GLOW = "#b794ff";
 const TARGET = "/rating";
 
@@ -49,7 +49,7 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
     coverT0: 0,
     pendingReveal: false,
     parts: [] as { x: number; y: number; vx: number; vy: number; sz: number }[],
-    cells: [] as { x: number; y: number; cell: number; delay: number; color: string }[],
+    cells: [] as { x: number; y: number; cell: number; delay: number }[],
     W: 0,
     H: 0,
   });
@@ -79,21 +79,13 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
 
   const buildCells = () => {
     const { W, H } = st.current;
-    const dark = darkRef.current;
     const cell = 24;
     const cols = Math.ceil(W / cell);
     const rows = Math.ceil(H / cell);
     const cells: typeof st.current.cells = [];
     for (let y = 0; y < rows; y++)
       for (let x = 0; x < cols; x++)
-        cells.push({
-          x: x * cell,
-          y: y * cell,
-          cell,
-          delay: (y / rows) * 0.5 + Math.random() * 0.18,
-          // 深色:每格随机一档紫色 → 不同深浅的紫色方块拼出覆盖层;浅色保持原绿
-          color: dark ? PURPLES[(Math.random() * PURPLES.length) | 0] : GREEN,
-        });
+        cells.push({ x: x * cell, y: y * cell, cell, delay: (y / rows) * 0.5 + Math.random() * 0.18 });
     st.current.cells = cells;
   };
 
@@ -105,18 +97,12 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
     const now = performance.now();
     ctx.clearRect(0, 0, s.W, s.H);
 
-    // 深色:用不同深浅的紫色方格铺满;浅色:沿用整片绿
+    // 覆盖色:深色统一紫、浅色绿
+    const coverColor = dark ? PURPLE : GREEN;
     const paint = (alpha: number) => {
       ctx.globalAlpha = alpha;
-      if (dark) {
-        for (const c of s.cells) {
-          ctx.fillStyle = c.color;
-          ctx.fillRect(c.x, c.y, c.cell + 1, c.cell + 1);
-        }
-      } else {
-        ctx.fillStyle = GREEN;
-        ctx.fillRect(0, 0, s.W, s.H);
-      }
+      ctx.fillStyle = coverColor;
+      ctx.fillRect(0, 0, s.W, s.H);
       ctx.globalAlpha = 1;
     };
 
@@ -150,7 +136,7 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
         const k = easeIO(clamp((e - c.delay) / 0.4, 0, 1));
         if (k < 1) {
           ctx.globalAlpha = 1 - k;
-          ctx.fillStyle = c.color;
+          ctx.fillStyle = coverColor;
           const sh = k * c.cell;
           ctx.fillRect(c.x, c.y + sh * 0.6, c.cell + 1, c.cell - sh + 1);
         }
