@@ -49,6 +49,7 @@ export function PixelMorphEntry() {
     parts: [] as Particle[],
     W: 0, H: 0, zhFont: "",
     h: 0, hoverT: 0, t: 0, mouseX: -999, mouseY: -999,
+    launched: false, // 点击后清空本地文字，让像素消散交给全屏覆盖层
   });
 
   useEffect(() => {
@@ -102,6 +103,11 @@ export function PixelMorphEntry() {
       s.t += 0.05;
       s.h += (s.hoverT - s.h) * 0.07;
       ctx.clearRect(0, 0, s.W, s.H);
+      if (s.launched) {
+        // 文字已交给覆盖层飞散：本地保持清空
+        raf.current = requestAnimationFrame(frame);
+        return;
+      }
       const zhA = 1 - clamp(s.h / 0.32, 0, 1);
       if (zhA > 0) {
         ctx.globalAlpha = zhA;
@@ -182,6 +188,7 @@ export function PixelMorphEntry() {
     const cvs = canvasRef.current;
     const s = st.current;
     if (!cvs || s.parts.length === 0) {
+      s.launched = true;
       enter({ points: [], click: { x: e.clientX, y: e.clientY } });
       return;
     }
@@ -192,6 +199,7 @@ export function PixelMorphEntry() {
       x: r.left + p.cx + (p.ex - p.cx) * e2,
       y: r.top + p.cy + (p.ey - p.cy) * e2,
     }));
+    s.launched = true; // 立刻清空本地文字 → 像素随覆盖层飞散消散
     enter({ points, click: { x: e.clientX, y: e.clientY } });
   }
 
