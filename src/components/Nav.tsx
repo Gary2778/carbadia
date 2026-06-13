@@ -12,6 +12,7 @@ type Me = { id: string; name: string; email: string; cashBalance: number; locked
 const links = [
   { href: "/", label: "行情" },
   { href: "/otc", label: "OTC 挂牌" },
+  { href: "/rating", label: "评级" },
   { href: "/portfolio", label: "我的资产" },
 ];
 
