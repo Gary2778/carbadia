@@ -7,8 +7,8 @@ import { useRatingTransition, type Pt } from "./PixelTransition";
 
 const ZH = "碳信用评级";
 const EN = "CARBON RATING";
-const GAP = 8;
-const SQ = 6;
+const GAP = 4; // 采样网格更细 → 字母分辨率更高、英文清晰
+const SQ = 3;  // 像素方块(留 1px 缝)
 const GREEN = "#0a8a52";
 const GLOW = "#16d97f";
 const FONT = (fs: number) => `700 ${fs}px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif`;
@@ -68,10 +68,16 @@ export function PixelMorphEntry() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       s.W = W;
       s.H = H;
-      const zhFS = Math.max(40, Math.min(96, W / (ZH.length + 0.6)));
+      const zhFS = Math.max(40, Math.min(88, W / (ZH.length + 0.8)));
       s.zhFont = FONT(zhFS);
-      const enFS = Math.max(34, Math.min(72, W / (EN.length * 0.62)));
-      const E = sample(EN, enFS);
+      // 英文按宽度自适应：先估字号，再按实测宽度收缩到画布内，保证清晰且不溢出
+      let enFS = Math.max(44, Math.min(84, W / (EN.length * 0.6)));
+      let E = sample(EN, enFS);
+      const avail = W * 0.94;
+      if (E.tw > avail) {
+        enFS = Math.max(28, enFS * (avail / E.tw));
+        E = sample(EN, enFS);
+      }
       const Z = sample(ZH, zhFS);
       const exo = (W - E.tw) / 2, eyo = (H - E.th) / 2, zxo = (W - Z.tw) / 2, zyo = (H - Z.th) / 2;
       const cx = W / 2, cy = H / 2;
@@ -87,8 +93,8 @@ export function PixelMorphEntry() {
       const e = easeIO(clamp(s.h, 0, 1));
       const scat = Math.sin(clamp(s.h, 0, 1) * Math.PI) * 22;
       const br = clamp((s.h - 0.12) / 0.4, 0, 1);
-      const ox = Math.sin(s.t * 1.7 + p.ph) * 1.6 * br;
-      const oy = Math.cos(s.t * 1.7 + p.ph) * 1.6 * br;
+      const ox = Math.sin(s.t * 1.7 + p.ph) * 1.1 * br;
+      const oy = Math.cos(s.t * 1.7 + p.ph) * 1.1 * br;
       return { x: p.cx + (p.ex - p.cx) * e + p.dirx * scat + ox, y: p.cy + (p.ey - p.cy) * e + p.diry * scat + oy };
     };
 
@@ -118,14 +124,14 @@ export function PixelMorphEntry() {
             const d = Math.sqrt(d2) || 1;
             infl = 1 - d / R;
             infl *= infl;
-            const push = infl * 18;
+            const push = infl * 11;
             px += (dx / d) * push;
             py += (dy / d) * push;
           }
           const tw = (Math.sin(s.t * 1.7 + p.ph) + 1) / 2;
-          ctx.globalAlpha = clamp(pA * (0.72 + 0.28 * tw) + infl * 0.5, 0, 1);
+          ctx.globalAlpha = clamp(pA * (0.78 + 0.22 * tw) + infl * 0.5, 0, 1);
           ctx.fillStyle = full || infl > 0.22 ? GLOW : GREEN;
-          const sz = SQ + (full ? tw * 1.2 : 0) + infl * 3;
+          const sz = SQ + (full ? tw * 0.8 : 0) + infl * 2;
           ctx.fillRect(px - (sz - SQ) / 2, py - (sz - SQ) / 2, sz, sz);
         }
         ctx.globalAlpha = 1;
@@ -201,8 +207,8 @@ export function PixelMorphEntry() {
   }
 
   return (
-    <Link href="/rating" onClick={onClick} aria-label="碳信用评级服务" className="block w-full max-w-[440px] mx-auto">
-      <canvas ref={canvasRef} className="block w-full h-[140px] cursor-pointer" />
+    <Link href="/rating" onClick={onClick} aria-label="碳信用评级服务" className="block w-full max-w-[600px] mx-auto">
+      <canvas ref={canvasRef} className="block w-full h-[150px] cursor-pointer" />
     </Link>
   );
 }
