@@ -207,16 +207,31 @@ export function PixelMorphEntry() {
     return (
       <Link
         href="/rating"
-        className="inline-block tnum font-semibold text-2xl text-accent hover:text-accent-strong transition-colors"
+        aria-label="碳信用评级服务"
+        className="group block w-full max-w-2xl mx-auto rounded-3xl border border-border bg-gradient-to-b from-accent/[0.06] to-transparent shadow-soft hover:shadow-card hover:border-accent/40 transition-all duration-300 px-6 py-9 text-center"
       >
-        碳信用评级 →
+        <p className="font-mono text-[10px] tracking-[0.3em] text-accent/80 mb-3">CARBADIA · 独家评级服务</p>
+        <div className="text-3xl font-semibold text-accent">碳信用评级</div>
+        <div className="inline-flex items-center gap-1.5 text-sm font-medium text-accent mt-4">
+          进入评级服务 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+        </div>
       </Link>
     );
   }
 
   return (
-    <Link href="/rating" onClick={onClick} aria-label="碳信用评级服务" className="block w-full max-w-[600px] mx-auto">
-      <canvas ref={canvasRef} className="block w-full h-[150px] cursor-pointer" />
+    <Link
+      href="/rating"
+      onClick={onClick}
+      aria-label="碳信用评级服务"
+      className="group relative block w-full max-w-2xl mx-auto rounded-3xl border border-border bg-gradient-to-b from-accent/[0.06] to-transparent shadow-soft hover:shadow-card hover:border-accent/40 transition-all duration-300 cursor-pointer px-6 pt-5 pb-5"
+    >
+      <p className="font-mono text-[10px] tracking-[0.3em] text-accent/80 text-center">CARBADIA · 独家评级服务</p>
+      <canvas ref={canvasRef} className="block w-full h-[150px]" />
+      <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-accent">
+        悬停唤醒 · 点击进入
+        <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+      </div>
     </Link>
   );
 }

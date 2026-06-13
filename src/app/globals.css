@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* Carbadia 设计 Token + 全站统一背景 */
 :root {
   --background: #ffffff;
   --surface: #ffffff;
@@ -36,7 +37,17 @@ html {
 }
 
 body {
-  background: var(--background);
+  /* 全站统一的柔和背景：浅绿氛围光晕 + 极淡像素网格，把各页连成一体 */
+  background-color: var(--background);
+  background-image:
+    radial-gradient(55rem 32rem at 50% -10rem, rgba(10, 138, 82, 0.07), transparent 70%),
+    radial-gradient(40rem 28rem at 100% 2rem, rgba(10, 138, 82, 0.04), transparent 70%),
+    linear-gradient(rgba(10, 138, 82, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 138, 82, 0.022) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 22px 22px, 22px 22px;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  background-attachment: fixed;
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
