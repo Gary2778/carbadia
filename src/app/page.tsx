@@ -8,7 +8,7 @@ import { Sparkline } from "@/components/charts/Sparkline";
 import { FlashCell } from "@/components/anim/FlashCell";
 import { ParticleHero } from "@/components/anim/ParticleHero";
 import { PixelMorphEntry } from "@/components/rating/PixelMorphEntry";
-import { useT } from "@/lib/i18n";
+import { useT, useLang } from "@/lib/i18n";
 
 type Asset = {
   id: string;
@@ -67,6 +67,7 @@ const DICT = {
 
 export default function Home() {
   const t = useT(DICT);
+  const { lang } = useLang();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -100,14 +101,15 @@ export default function Home() {
         </motion.p>
         <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight leading-[1.05] mb-6">
           {t.heroLines.map((line, li) => (
-            <span key={li} className="block">
+            <span key={`${lang}-${li}`} className="block">
               {[...line].map((ch, i) =>
                 ch === " " ? (
                   // 空格保留为可换行的真实空白（英文标题词间距），不套 inline-block 以免被折叠
-                  <span key={i}>{" "}</span>
+                  <span key={`${lang}-${i}`}>{" "}</span>
                 ) : (
+                  // key 含 lang：切换语言时整体重挂载，每个字都重放逐字动画
                   <motion.span
-                    key={i}
+                    key={`${lang}-${i}`}
                     className="inline-block"
                     initial={reduced ? false : { opacity: 0, y: 26 }}
                     animate={{ opacity: 1, y: 0 }}
