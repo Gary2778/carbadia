@@ -5,6 +5,70 @@ import Link from "next/link";
 import { api, fmtMoney, fmtQty } from "@/lib/format";
 import { Reveal } from "@/components/anim/Reveal";
 import { useToast } from "@/components/anim/Toast";
+import { useT } from "@/lib/i18n";
+
+const DICT = {
+  en: {
+    title: "OTC Listings",
+    subtitle: "Over-the-counter block carbon-credit trades — sellers list, buyers fill directly",
+    collapse: "Collapse",
+    newListing: "+ New listing",
+    emptyPre: "No listings",
+    emptyMid: ", ",
+    emptyLogin: "log in",
+    emptyPost: " to publish",
+    thInstrument: "Instrument",
+    thSeller: "Seller",
+    thUnitPrice: "Unit price",
+    thAvailable: "Available (t)",
+    thMinBuy: "Min buy",
+    thAction: "Action",
+    loginToBuy: "Log in to buy",
+    createTitle: "New OTC Listing",
+    createHint: "Listing will lock your available holdings of the selected instrument.",
+    fieldInstrument: "Instrument",
+    fieldQuantity: "Quantity (t)",
+    fieldUnitPrice: "Unit price (¥/t)",
+    fieldMinBuy: "Min buy (t)",
+    submitting: "Submitting…",
+    confirmPublish: "Confirm",
+    listingPublished: "Listing published",
+    buy: "Buy",
+    confirm: "Confirm",
+    bought: (qty: string) => `Bought ${qty} t`,
+    cancelListing: "Cancel listing",
+  },
+  zh: {
+    title: "OTC 挂牌",
+    subtitle: "场外大宗碳信用交易 — 卖方挂牌，买方直接成交",
+    collapse: "收起",
+    newListing: "+ 发布挂牌",
+    emptyPre: "暂无挂牌",
+    emptyMid: "，",
+    emptyLogin: "登录",
+    emptyPost: "后可发布",
+    thInstrument: "标的",
+    thSeller: "卖方",
+    thUnitPrice: "单价",
+    thAvailable: "可售(吨)",
+    thMinBuy: "最小购买",
+    thAction: "操作",
+    loginToBuy: "登录购买",
+    createTitle: "发布 OTC 挂牌",
+    createHint: "挂牌将冻结你对应标的的可用持仓。",
+    fieldInstrument: "标的",
+    fieldQuantity: "数量(吨)",
+    fieldUnitPrice: "单价(元/吨)",
+    fieldMinBuy: "最小购买(吨)",
+    submitting: "提交中…",
+    confirmPublish: "确认发布",
+    listingPublished: "挂牌已发布",
+    buy: "购买",
+    confirm: "确认",
+    bought: (qty: string) => `已购买 ${qty} 吨`,
+    cancelListing: "撤销挂牌",
+  },
+};
 
 type Listing = {
   id: string;
@@ -20,6 +84,7 @@ type Asset = { id: string; symbol: string; name: string };
 type Me = { id: string } | null;
 
 export default function OtcPage() {
+  const t = useT(DICT);
   const [listings, setListings] = useState<Listing[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [me, setMe] = useState<Me>(null);
@@ -49,14 +114,14 @@ export default function OtcPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">OTC 挂牌</h1>
-          <p className="text-muted text-sm">场外大宗碳信用交易 — 卖方挂牌，买方直接成交</p>
+          <h1 className="text-xl font-bold">{t.title}</h1>
+          <p className="text-muted text-sm">{t.subtitle}</p>
         </div>
         {me && (
           <button
             onClick={() => setShowCreate((s) => !s)}
             className="px-4 py-2 rounded-full bg-accent text-background text-sm font-medium hover:bg-accent-strong transition-colors hover:opacity-90"
-          >{showCreate ? "收起" : "+ 发布挂牌"}</button>
+          >{showCreate ? t.collapse : t.newListing}</button>
         )}
       </div>
 
@@ -67,18 +132,18 @@ export default function OtcPage() {
       <Reveal>
         <div className="rounded-2xl border border-border bg-surface shadow-card overflow-hidden">
           {listings.length === 0 ? (
-            <div className="p-10 text-center text-muted">暂无挂牌{!me && <>，<Link href="/login" className="text-accent">登录</Link>后可发布</>}</div>
+            <div className="p-10 text-center text-muted">{t.emptyPre}{!me && <>{t.emptyMid}<Link href="/login" className="text-accent">{t.emptyLogin}</Link>{t.emptyPost}</>}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-muted text-xs">
                   <tr className="border-b border-border">
-                    <th className="text-left px-5 py-3 font-medium">标的</th>
-                    <th className="text-left px-3 py-3 font-medium hidden md:table-cell">卖方</th>
-                    <th className="text-right px-3 py-3 font-medium">单价</th>
-                    <th className="text-right px-3 py-3 font-medium">可售(吨)</th>
-                    <th className="text-right px-3 py-3 font-medium hidden sm:table-cell">最小购买</th>
-                    <th className="text-right px-5 py-3 font-medium">操作</th>
+                    <th className="text-left px-5 py-3 font-medium">{t.thInstrument}</th>
+                    <th className="text-left px-3 py-3 font-medium hidden md:table-cell">{t.thSeller}</th>
+                    <th className="text-right px-3 py-3 font-medium">{t.thUnitPrice}</th>
+                    <th className="text-right px-3 py-3 font-medium">{t.thAvailable}</th>
+                    <th className="text-right px-3 py-3 font-medium hidden sm:table-cell">{t.thMinBuy}</th>
+                    <th className="text-right px-5 py-3 font-medium">{t.thAction}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -98,7 +163,7 @@ export default function OtcPage() {
                         ) : me ? (
                           <BuyListing listing={l} onDone={load} />
                         ) : (
-                          <Link href="/login" className="text-xs text-accent">登录购买</Link>
+                          <Link href="/login" className="text-xs text-accent">{t.loginToBuy}</Link>
                         )}
                       </td>
                     </tr>
@@ -114,6 +179,7 @@ export default function OtcPage() {
 }
 
 function CreateListing({ assets, onDone }: { assets: Asset[]; onDone: () => void }) {
+  const t = useT(DICT);
   const toast = useToast();
   const [assetId, setAssetId] = useState(assets[0]?.id ?? "");
   const [quantity, setQuantity] = useState("");
@@ -134,7 +200,7 @@ function CreateListing({ assets, onDone }: { assets: Asset[]; onDone: () => void
           minQuantity: Number(minQty) || 1,
         }),
       });
-      toast("ok", "挂牌已发布");
+      toast("ok", t.listingPublished);
       onDone();
     } catch (e) {
       setErr((e as Error).message);
@@ -145,24 +211,24 @@ function CreateListing({ assets, onDone }: { assets: Asset[]; onDone: () => void
 
   return (
     <div className="rounded-2xl border border-border bg-surface shadow-card p-5 space-y-3">
-      <h2 className="font-semibold text-sm">发布 OTC 挂牌</h2>
-      <p className="text-xs text-muted">挂牌将冻结你对应标的的可用持仓。</p>
+      <h2 className="font-semibold text-sm">{t.createTitle}</h2>
+      <p className="text-xs text-muted">{t.createHint}</p>
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <label className="block sm:col-span-1">
-          <span className="text-xs text-muted">标的</span>
+          <span className="text-xs text-muted">{t.fieldInstrument}</span>
           <select value={assetId} onChange={(e) => setAssetId(e.target.value)}
             className="w-full mt-1 bg-surface-2 border border-border rounded-md px-2 py-2 text-sm outline-none focus:border-accent">
             {assets.map((a) => <option key={a.id} value={a.id}>{a.symbol}</option>)}
           </select>
         </label>
-        <Field label="数量(吨)" value={quantity} onChange={setQuantity} />
-        <Field label="单价(元/吨)" value={price} onChange={setPrice} step="0.01" />
-        <Field label="最小购买(吨)" value={minQty} onChange={setMinQty} />
+        <Field label={t.fieldQuantity} value={quantity} onChange={setQuantity} />
+        <Field label={t.fieldUnitPrice} value={price} onChange={setPrice} step="0.01" />
+        <Field label={t.fieldMinBuy} value={minQty} onChange={setMinQty} />
       </div>
       {err && <div className="text-down text-xs">{err}</div>}
       <button onClick={submit} disabled={busy || !assetId || !quantity || !price}
         className="px-4 py-2 rounded-full bg-accent text-background text-sm font-medium hover:bg-accent-strong transition-colors disabled:opacity-40">
-        {busy ? "提交中…" : "确认发布"}
+        {busy ? t.submitting : t.confirmPublish}
       </button>
     </div>
   );
@@ -179,18 +245,19 @@ function Field({ label, value, onChange, step }: { label: string; value: string;
 }
 
 function BuyListing({ listing, onDone }: { listing: Listing; onDone: () => void }) {
+  const t = useT(DICT);
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [qty, setQty] = useState(String(listing.minQuantity));
   const [busy, setBusy] = useState(false);
 
-  if (!open) return <button onClick={() => setOpen(true)} className="text-xs px-3 py-1 rounded bg-up text-background font-medium">购买</button>;
+  if (!open) return <button onClick={() => setOpen(true)} className="text-xs px-3 py-1 rounded bg-up text-background font-medium">{t.buy}</button>;
 
   async function buy() {
     setBusy(true);
     try {
       await api(`/api/otc/${listing.id}/buy`, { method: "POST", body: JSON.stringify({ quantity: Number(qty) }) });
-      toast("ok", `已购买 ${qty} 吨`);
+      toast("ok", t.bought(qty));
       setOpen(false);
       onDone();
     } catch (e) {
@@ -205,7 +272,7 @@ function BuyListing({ listing, onDone }: { listing: Listing; onDone: () => void 
       <input type="number" value={qty} min={1} max={listing.quantity} onChange={(e) => setQty(e.target.value)}
         className="w-16 bg-surface-2 border border-border rounded px-2 py-1 text-xs tnum outline-none focus:border-accent" />
       <button onClick={buy} disabled={busy} className="text-xs px-2 py-1 rounded bg-up text-background font-medium disabled:opacity-40">
-        {busy ? "…" : "确认"}
+        {busy ? "…" : t.confirm}
       </button>
       <button onClick={() => setOpen(false)} className="text-xs text-muted px-1">×</button>
     </div>
@@ -213,9 +280,10 @@ function BuyListing({ listing, onDone }: { listing: Listing; onDone: () => void 
 }
 
 function CancelListing({ id, onDone }: { id: string; onDone: () => void }) {
+  const t = useT(DICT);
   const [busy, setBusy] = useState(false);
   return (
     <button disabled={busy} onClick={async () => { setBusy(true); try { await api(`/api/otc/${id}`, { method: "DELETE" }); onDone(); } catch { setBusy(false); } }}
-      className="text-xs text-muted hover:text-down disabled:opacity-40">撤销挂牌</button>
+      className="text-xs text-muted hover:text-down disabled:opacity-40">{t.cancelListing}</button>
   );
 }
