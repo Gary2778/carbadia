@@ -21,9 +21,15 @@ COPY . .
 # 生成 Prisma Client
 RUN npx prisma generate
 
-# 构建期可能触及 DB：用一次性临时库满足构建，运行时由 Railway 注入真实 DATABASE_URL
-ENV DATABASE_URL="file:/app/prisma/build.db"
-RUN npx prisma migrate deploy && npm run build
+# 构建门禁：测试或 lint 不过就不出镜像
+RUN npm run test && npm run lint
+
+# 构建期可能触及 DB：用一次性临时库满足构建，构建完即删。
+# DATABASE_URL 只在本行内联注入，不落成持久 ENV——运行时由 Railway 注入真实值，
+# 避免遗留的 ENV 把生产悄悄指向镜像内临时库。
+RUN DATABASE_URL="file:/app/prisma/build.db" npx prisma migrate deploy \
+  && DATABASE_URL="file:/app/prisma/build.db" npm run build \
+  && rm -f /app/prisma/build.db*
 
 RUN chmod +x docker-entrypoint.sh
 

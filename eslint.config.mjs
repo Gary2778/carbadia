@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Prisma 生成的 client 不参与 lint(构建门禁会跑 lint,生成物必须排除)
+    "src/generated/**",
   ]),
 ]);
 

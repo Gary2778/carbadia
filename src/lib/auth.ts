@@ -3,7 +3,18 @@ import { cookies } from "next/headers";
 import { prisma } from "./db";
 
 const COOKIE_NAME = "cx_session";
-const SECRET = process.env.SESSION_SECRET ?? "dev-insecure-secret-change-me";
+const DEV_SECRET = "dev-insecure-secret-change-me";
+
+// 生产环境必须显式配置 SESSION_SECRET,否则任何人都能伪造会话 cookie。
+// 故意不在模块顶层抛错:next build 会加载路由模块,顶层 throw 会让构建直接失败;
+// 推迟到签名/验签时再检查,构建期不受影响,运行时缺配置则快速失败。
+function getSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (process.env.NODE_ENV === "production" && (!secret || secret === DEV_SECRET)) {
+    throw new Error("生产环境必须设置 SESSION_SECRET 环境变量(且不能沿用 dev 默认值)");
+  }
+  return secret ?? DEV_SECRET;
+}
 
 // ---- 密码哈希 (scrypt, 无需额外依赖) ----
 export function hashPassword(password: string): string {
@@ -23,7 +34,7 @@ export function verifyPassword(password: string, stored: string): boolean {
 
 // ---- 会话 cookie (HMAC 签名的 userId) ----
 function sign(value: string): string {
-  const sig = crypto.createHmac("sha256", SECRET).update(value).digest("hex");
+  const sig = crypto.createHmac("sha256", getSecret()).update(value).digest("hex");
   return `${value}.${sig}`;
 }
 
@@ -32,7 +43,7 @@ function unsign(signed: string): string | null {
   if (idx < 0) return null;
   const value = signed.slice(0, idx);
   const sig = signed.slice(idx + 1);
-  const expected = crypto.createHmac("sha256", SECRET).update(value).digest("hex");
+  const expected = crypto.createHmac("sha256", getSecret()).update(value).digest("hex");
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
@@ -43,6 +54,7 @@ export async function createSession(userId: string) {
   const store = await cookies();
   store.set(COOKIE_NAME, sign(userId), {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // 生产走 HTTPS,防止 cookie 明文传输
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7, // 7 天
