@@ -115,10 +115,11 @@ export async function placeOrder(input: PlaceOrderInput) {
           takerCash = round2(takerCash - amount);
         } else {
           // 限价买 taker: 按下单价冻结, 成交价更优时退还差额
+          // 冻结解除必须按下单价(price×q)而非成交价(amount), 否则差额会同时留在冻结里又退进余额
           const refund = round2((price! - fp) * q);
           await tx.user.update({
             where: { id: buyerId },
-            data: { lockedCash: { decrement: amount }, cashBalance: { increment: refund } },
+            data: { lockedCash: { decrement: round2(price! * q) }, cashBalance: { increment: refund } },
           });
         }
       } else {
