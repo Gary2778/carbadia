@@ -126,7 +126,7 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
     } else if (s.phase === "cover") {
       paint(1);
       const held = now - s.coverT0;
-      if ((s.pendingReveal && held > 200) || held > 1600) {
+      if ((s.pendingReveal && held > 120) || held > 650) {
         s.phase = "reveal";
         s.t0 = now;
       }

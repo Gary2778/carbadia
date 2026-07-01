@@ -121,6 +121,15 @@ html[data-theme="dark"] body {
   letter-spacing: 0;
 }
 
+/* 手机:去掉每字阴影(重绘成本)并收紧内外边距,标题不贴边/不溢出 */
+@media (max-width: 767px) {
+  .ransom-letter {
+    box-shadow: none;
+    padding: 0.02em 0.1em;
+    margin: 0 0.02em;
+  }
+}
+
 /* ── 星星眨眼 ──────────────────────────────────────────────────── */
 @keyframes carbadia-twinkle {
   0%,
@@ -156,6 +165,21 @@ html[data-theme="dark"] body {
   animation: carbadia-shoot 9s ease-in infinite;
 }
 
+/* ── 主题切换按钮:呼吸灯(柔和脉冲光晕),引导用户发现明/暗切换 ── */
+@keyframes carbadia-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--tg-ring, transparent), 0 0 4px 0 var(--tg-glow, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 1px var(--tg-ring, transparent), 0 0 16px 4px var(--tg-glow, transparent);
+  }
+}
+
+.carbadia-theme-toggle {
+  animation: carbadia-breathe 2.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .carbadia-star {
     animation: none !important;
@@ -165,5 +189,10 @@ html[data-theme="dark"] body {
   .carbadia-shoot {
     animation: none !important;
     opacity: 0.85;
+  }
+  /* 减弱动效时:呼吸灯不脉冲,但保留一圈静态光晕,仍然醒目 */
+  .carbadia-theme-toggle {
+    animation: none !important;
+    box-shadow: 0 0 0 1px var(--tg-ring, transparent), 0 0 10px 1px var(--tg-glow, transparent);
   }
 }

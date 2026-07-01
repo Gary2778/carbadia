@@ -9,7 +9,9 @@ import { DepthChart } from "@/components/charts/DepthChart";
 import { NumberTicker } from "@/components/anim/NumberTicker";
 import { FlashCell } from "@/components/anim/FlashCell";
 import { useToast } from "@/components/anim/Toast";
-import { useT } from "@/lib/i18n";
+import { ComplianceNote } from "@/components/ComplianceNote";
+import { useT, useLang } from "@/lib/i18n";
+import { tName, tProjectType, tCountry, tRegistry } from "@/lib/data-i18n";
 import type { Candle, IntervalKey } from "@/lib/candles";
 
 const DICT = {
@@ -137,6 +139,7 @@ const INTERVAL_TABS: { key: IntervalKey }[] = [
 
 export default function MarketPage({ params }: { params: Promise<{ symbol: string }> }) {
   const t = useT(DICT);
+  const { lang } = useLang();
   const { symbol } = use(params);
   const [data, setData] = useState<MarketData | null>(null);
   const [candles, setCandles] = useState<Candle[]>([]);
@@ -195,7 +198,7 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
             <h1 className="text-xl font-bold">{asset.symbol}</h1>
             <span className="text-xs px-2 py-0.5 rounded bg-surface-2 border border-border">{asset.standard}</span>
           </div>
-          <div className="text-muted text-sm">{asset.name}</div>
+          <div className="text-muted text-sm">{tName(asset.symbol, asset.name, lang)}</div>
         </div>
         <div>
           <div className="text-xs text-muted">{t.lastPrice}</div>
@@ -228,9 +231,9 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
           </div>
         </div>
         <div className="text-sm text-muted space-y-0.5">
-          <div>{t.projectType}: <span className="text-foreground">{asset.projectType}</span></div>
-          <div>{t.vintage}: <span className="text-foreground">{asset.vintage}</span> · {t.region}: <span className="text-foreground">{asset.country}</span></div>
-          <div>{t.registry}: <span className="text-foreground">{asset.registry}</span></div>
+          <div>{t.projectType}: <span className="text-foreground">{tProjectType(asset.projectType, lang)}</span></div>
+          <div>{t.vintage}: <span className="text-foreground">{asset.vintage}</span> · {t.region}: <span className="text-foreground">{tCountry(asset.country, lang)}</span></div>
+          <div>{t.registry}: <span className="text-foreground">{tRegistry(asset.registry, lang)}</span></div>
         </div>
       </div>
 
@@ -542,6 +545,7 @@ function OrderForm({
       >
         {busy ? t.submitting : done ? `✓ ${t.submitted}` : side === "BUY" ? t.buy : t.sell}
       </motion.button>
+      <ComplianceNote className="text-center" />
     </div>
   );
 }

@@ -33,8 +33,8 @@ const PROJECTS: { symbol: string; type: string; grade: string; color: string }[]
 
 const DICT = {
   en: {
-    eyebrow: "CARBON CREDIT RATING",
-    title: "Carbon Credit Rating",
+    eyebrow: "CCRC · CARBON CREDIT RATING CONNOISSEUR",
+    title: "Carbon Credit Rating Connoisseur",
     lead:
       "Exclusive to Carbadia — an independent, transparent assessment of the real emission-reduction quality of every carbon credit. Eight grades, from AAA to D, so you can read a project's quality at a glance.",
     disclaimer: "Sample ratings · For demonstration only, not investment advice",
@@ -81,8 +81,8 @@ const DICT = {
     ctaLink: "Go to the exchange →",
   },
   zh: {
-    eyebrow: "CARBON CREDIT RATING",
-    title: "碳信用评级服务",
+    eyebrow: "CCRC · 碳信用评级鉴赏家",
+    title: "碳信用评级鉴赏家",
     lead:
       "Carbadia 独家——独立、透明地评估每一笔碳信用的真实减排质量。八档信用评级，从 AAA 到 D，一眼看懂项目成色。",
     disclaimer: "示例评级 · 仅供演示，不构成投资建议",

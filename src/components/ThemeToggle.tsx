@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { motion } from "motion/react";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
@@ -17,7 +18,14 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label={dark ? tx.toLight : tx.toDark}
       aria-pressed={dark}
-      className="relative grid h-8 w-8 place-items-center overflow-hidden rounded-full border border-border bg-surface-2 text-foreground transition-colors hover:border-accent/50"
+      style={
+        {
+          // 呼吸灯光晕配色:浅色=暖阳橙,深色=月光金
+          "--tg-glow": dark ? "rgba(255,221,120,0.55)" : "rgba(245,166,35,0.55)",
+          "--tg-ring": dark ? "rgba(255,221,120,0.30)" : "rgba(245,166,35,0.32)",
+        } as CSSProperties
+      }
+      className="carbadia-theme-toggle relative grid h-10 w-10 md:h-9 md:w-9 place-items-center rounded-full border border-border bg-surface-2 text-foreground transition-colors hover:border-accent/60"
     >
       <motion.span
         key={dark ? "moon" : "sun"}

@@ -6,6 +6,7 @@ import { useReducedMotion } from "motion/react";
 import { useRatingTransition, type Pt } from "./PixelTransition";
 import { useLang, useT } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
+import { useLowPower } from "@/lib/useLowPower";
 
 const MORPH = "CARBON RATING"; // 悬停后的像素英文（两种语言一致）
 const GAP = 4; // 采样网格更细 → 字母分辨率更高、英文清晰
@@ -47,6 +48,7 @@ const cGlow = (dark: boolean) => (dark ? "#c9a8ff" : GLOW);
 
 export function PixelMorphEntry() {
   const reduced = useReducedMotion();
+  const low = useLowPower(); // 手机/触屏:像素 rAF + hover 唤醒无意义,回退到静态卡片
   const { lang } = useLang();
   const dark = useTheme().theme === "dark";
   // 卡片配色(深色紫 / 浅色绿)——完整类名字面量,便于 Tailwind 扫描生成
@@ -55,8 +57,8 @@ export function PixelMorphEntry() {
   const cKicker = dark ? "text-[#b794ff]/80" : "text-accent/80";
   const cAccent = dark ? "text-[#b794ff]" : "text-accent";
   const tx = useT({
-    en: { kicker: "CARBADIA · EXCLUSIVE", rest: "Carbon Rating", cta: "Hover to wake · click to enter", ctaReduced: "Enter rating service", aria: "Carbon Credit Rating service" },
-    zh: { kicker: "CARBADIA · 独家评级服务", rest: "碳信用评级", cta: "悬停唤醒 · 点击进入", ctaReduced: "进入评级服务", aria: "碳信用评级服务" },
+    en: { kicker: "CCRC · CARBADIA EXCLUSIVE", rest: "Carbon Rating", cta: "Hover to wake · click to enter", ctaReduced: "Enter rating service", aria: "CCRC · Carbon Credit Rating Connoisseur" },
+    zh: { kicker: "CCRC · CARBADIA 独家评级", rest: "碳信用评级", cta: "悬停唤醒 · 点击进入", ctaReduced: "进入评级服务", aria: "CCRC · 碳信用评级鉴赏家" },
   });
   const { enter } = useRatingTransition();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -69,7 +71,7 @@ export function PixelMorphEntry() {
   });
 
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || low) return;
     const cvs = canvasRef.current;
     if (!cvs) return;
     const ctx = cvs.getContext("2d");
@@ -78,11 +80,13 @@ export function PixelMorphEntry() {
     const restText = lang === "zh" ? "碳信用评级" : "Carbon Rating";
     const colBase = cBase(dark);
     const colGlow = cGlow(dark);
+    let last = 0; // delta-time:高刷新率屏幕不变快
 
     const build = () => {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const W = cvs.clientWidth;
       const H = cvs.clientHeight;
+      if (W === 0 || H === 0) return; // 画布已脱离布局(如切到低功耗回退),不要取样
       cvs.width = W * dpr;
       cvs.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -124,8 +128,11 @@ export function PixelMorphEntry() {
     };
 
     const frame = () => {
-      s.t += 0.05;
-      s.h += (s.hoverT - s.h) * 0.07;
+      const now = performance.now();
+      const dt = Math.min((now - last) / 16.6667, 3);
+      last = now;
+      s.t += 0.05 * dt;
+      s.h += (s.hoverT - s.h) * (1 - Math.pow(1 - 0.07, dt));
       ctx.clearRect(0, 0, s.W, s.H);
       if (s.launched) {
         raf.current = requestAnimationFrame(frame);
@@ -184,27 +191,30 @@ export function PixelMorphEntry() {
         cancelAnimationFrame(raf.current);
         raf.current = 0;
       } else if (!raf.current) {
+        last = performance.now();
         raf.current = requestAnimationFrame(frame);
       }
     };
 
     s.launched = false;
     build();
+    last = performance.now();
     raf.current = requestAnimationFrame(frame);
     const rebuild = () => build();
-    setTimeout(rebuild, 300);
+    const rebuildTimer = setTimeout(rebuild, 300);
     cvs.addEventListener("mousemove", onMove);
     cvs.addEventListener("mouseleave", onLeave);
     window.addEventListener("resize", rebuild);
     document.addEventListener("visibilitychange", onVis);
     return () => {
+      clearTimeout(rebuildTimer); // 防止卸载/切回退后延迟 rebuild 取样空画布
       cancelAnimationFrame(raf.current);
       cvs.removeEventListener("mousemove", onMove);
       cvs.removeEventListener("mouseleave", onLeave);
       window.removeEventListener("resize", rebuild);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [reduced, lang, dark]);
+  }, [reduced, low, lang, dark]);
 
   function onClick(e: React.MouseEvent) {
     if (reduced) return; // 让 <Link> 正常跳转
@@ -227,7 +237,7 @@ export function PixelMorphEntry() {
     enter({ points, click: { x: e.clientX, y: e.clientY } });
   }
 
-  if (reduced) {
+  if (reduced || low) {
     return (
       <Link
         href="/rating"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "@/lib/theme";
+import { useLowPower } from "@/lib/useLowPower";
 
 // 手绘风格的星空(无山丘)。手绘感来自:
 //   1) 一张 SVG 滤镜(分形噪声 + 位移贴图)整体抖动线条,边缘像钢笔/铅笔手绘;
@@ -144,7 +145,13 @@ const SHINE = Array.from({ length: 9 }, (_, i) => {
 
 export function StarrySky() {
   const { theme } = useTheme();
+  const low = useLowPower();
   if (theme !== "dark") return null;
+
+  // 手机/触屏:位移滤镜(feTurbulence+feDisplacementMap)在移动端 GPU 上极贵,且其内 64 颗
+  // 眨眼星每帧强制重栅格化整屏 → 卡顿主因。低功耗下:不套滤镜、星数减半、星星静止、去掉流星。
+  const stars = low ? STARS.slice(0, 24) : STARS;
+  const skyFilter = low ? undefined : "url(#sketchSky)";
 
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden>
@@ -169,8 +176,8 @@ export function StarrySky() {
         {/* 极淡月晕(滤镜外,保持柔和) */}
         <circle cx={MOON.cx} cy={MOON.cy} r={150} fill="url(#moonGlowSky)" />
 
-        {/* 整组套用粗墨抖动滤镜 */}
-        <g filter="url(#sketchSky)">
+        {/* 整组套用粗墨抖动滤镜(低功耗下省略,抖动已烘焙进路径,视觉差异极小) */}
+        <g filter={skyFilter}>
           {/* ── 星座连线(最底层,极淡虚线) ── */}
           <g stroke="#cfe3ff" strokeWidth={1} strokeLinecap="round" fill="none" opacity="0.2" strokeDasharray="2 7">
             {CONSTELLATIONS.map((c, i) => (
@@ -214,13 +221,13 @@ export function StarrySky() {
             <circle cx={MOON.cx + 4} cy={MOON.cy + 44} r={3.4} fill="#ff9ec4" opacity={0.5} />
           </g>
 
-          {/* ── 星场:CSS 眨眼,错峰;reduced-motion 由 globals.css 关闭 ── */}
-          {STARS.map((s, i) => (
+          {/* ── 星场:CSS 眨眼,错峰;reduced-motion 由 globals.css 关闭;低功耗下静止 ── */}
+          {stars.map((s, i) => (
             <g
               key={i}
               className="carbadia-star"
               transform={`translate(${s.x.toFixed(1)} ${s.y.toFixed(1)}) rotate(${s.rot.toFixed(1)})`}
-              style={{ animation: `carbadia-twinkle ${s.dur.toFixed(2)}s ease-in-out ${s.delay.toFixed(2)}s infinite` }}
+              style={low ? undefined : { animation: `carbadia-twinkle ${s.dur.toFixed(2)}s ease-in-out ${s.delay.toFixed(2)}s infinite` }}
             >
               {s.kind === "star" && (
                 <path d={s.d} fill={s.color} fillOpacity={0.08} stroke={s.color} strokeWidth={s.sw} strokeLinecap="round" strokeLinejoin="round" />
@@ -237,7 +244,8 @@ export function StarrySky() {
           ))}
         </g>
 
-        {/* ── 流星:周期性掠过(放在滤镜组外,避免每帧重算滤镜;尾迹用虚线保手绘味) ── */}
+        {/* ── 流星:周期性掠过(低功耗下省略,持续动画无谓耗电) ── */}
+        {!low && (
         <g transform="translate(300 138)">
           <g className="carbadia-shoot">
             <line x1="0" y1="0" x2="-52" y2="-24" stroke="#fff7e6" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="1 6" opacity="0.85" />
@@ -248,6 +256,7 @@ export function StarrySky() {
             </g>
           </g>
         </g>
+        )}
       </svg>
     </div>
   );

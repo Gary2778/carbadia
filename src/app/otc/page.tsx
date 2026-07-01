@@ -5,7 +5,9 @@ import Link from "next/link";
 import { api, fmtMoney, fmtQty } from "@/lib/format";
 import { Reveal } from "@/components/anim/Reveal";
 import { useToast } from "@/components/anim/Toast";
-import { useT } from "@/lib/i18n";
+import { ComplianceNote } from "@/components/ComplianceNote";
+import { useT, useLang } from "@/lib/i18n";
+import { tName, tUserName } from "@/lib/data-i18n";
 
 const DICT = {
   en: {
@@ -85,6 +87,7 @@ type Me = { id: string } | null;
 
 export default function OtcPage() {
   const t = useT(DICT);
+  const { lang } = useLang();
   const [listings, setListings] = useState<Listing[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [me, setMe] = useState<Me>(null);
@@ -116,6 +119,7 @@ export default function OtcPage() {
         <div>
           <h1 className="text-xl font-bold">{t.title}</h1>
           <p className="text-muted text-sm">{t.subtitle}</p>
+          <ComplianceNote className="mt-1" />
         </div>
         {me && (
           <button
@@ -151,9 +155,9 @@ export default function OtcPage() {
                     <tr key={l.id} className="border-b border-border/40 hover:bg-surface-2">
                       <td className="px-5 py-3">
                         <Link href={`/market/${l.asset.symbol}`} className="font-medium hover:text-accent">{l.asset.symbol}</Link>
-                        <div className="text-xs text-muted truncate max-w-[180px]">{l.asset.name}</div>
+                        <div className="text-xs text-muted truncate max-w-[180px]">{tName(l.asset.symbol, l.asset.name, lang)}</div>
                       </td>
-                      <td className="px-3 py-3 text-muted hidden md:table-cell">{l.seller.name}</td>
+                      <td className="px-3 py-3 text-muted hidden md:table-cell">{tUserName(l.seller.name, lang)}</td>
                       <td className="px-3 py-3 text-right tnum text-accent">¥{fmtMoney(l.pricePerUnit)}</td>
                       <td className="px-3 py-3 text-right tnum">{fmtQty(l.quantity)}</td>
                       <td className="px-3 py-3 text-right tnum text-muted hidden sm:table-cell">{fmtQty(l.minQuantity)}</td>

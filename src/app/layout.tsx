@@ -14,12 +14,12 @@ export const metadata: Metadata = {
   description: "Online carbon credit exchange — order-book matching and OTC listings",
 };
 
-// 首帧绘制前按 localStorage 纠正主题，避免深/浅闪烁（默认深色）
-const THEME_INIT = `(function(){try{var t=localStorage.getItem("carbadia-theme");if(t!=="light"&&t!=="dark")t="dark";document.documentElement.setAttribute("data-theme",t);document.documentElement.style.colorScheme=t;}catch(e){}})()`;
+// 首帧绘制前按 localStorage 纠正主题，避免深/浅闪烁（默认浅色）
+const THEME_INIT = `(function(){try{var t=localStorage.getItem("carbadia-theme");if(t!=="light"&&t!=="dark")t="light";document.documentElement.setAttribute("data-theme",t);document.documentElement.style.colorScheme=t;}catch(e){}})()`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-theme="dark" className="h-full antialiased" suppressHydrationWarning>
+    <html lang="en" data-theme="light" className="h-full antialiased" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
       </head>

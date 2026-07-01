@@ -2,15 +2,17 @@
 
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
+import { useLowPower } from "@/lib/useLowPower";
 
 type P = { x: number; y: number; vx: number; vy: number; r: number };
 
 export function ParticleHero() {
   const ref = useRef<HTMLCanvasElement>(null);
   const reduced = useReducedMotion();
+  const low = useLowPower(); // 手机:不跑粒子 rAF,用静态光晕代替
 
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || low) return;
     const canvas = ref.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -18,6 +20,7 @@ export function ParticleHero() {
 
     let raf = 0;
     let running = true;
+    let last = 0; // 按真实耗时缩放,高刷新率屏幕不变快
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     let w = 0;
     let h = 0;
@@ -47,7 +50,10 @@ export function ParticleHero() {
     let t = 0;
     function frame() {
       if (!running) return;
-      t += 0.008;
+      const now = performance.now();
+      const dt = Math.min((now - last) / 16.6667, 3);
+      last = now;
+      t += 0.008 * dt;
       ctx!.clearRect(0, 0, w, h);
 
       // 呼吸光晕
@@ -62,8 +68,8 @@ export function ParticleHero() {
 
       // 粒子
       for (const p of ps) {
-        p.x = (p.x + p.vx + 1) % 1;
-        p.y = (p.y + p.vy + 1) % 1;
+        p.x = (p.x + p.vx * dt + 1) % 1;
+        p.y = (p.y + p.vy * dt + 1) % 1;
         ctx!.beginPath();
         ctx!.arc(px(p), py(p), p.r, 0, Math.PI * 2);
         ctx!.fillStyle = "rgba(10,138,82,0.35)";
@@ -88,6 +94,7 @@ export function ParticleHero() {
       }
       raf = requestAnimationFrame(frame);
     }
+    last = performance.now();
     raf = requestAnimationFrame(frame);
 
     const onMouse = (e: MouseEvent) => {
@@ -98,6 +105,7 @@ export function ParticleHero() {
       const visible = document.visibilityState === "visible";
       if (visible && !running) {
         running = true;
+        last = performance.now();
         raf = requestAnimationFrame(frame);
       } else if (!visible) {
         running = false;
@@ -114,11 +122,11 @@ export function ParticleHero() {
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [reduced]);
+  }, [reduced, low]);
 
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden>
-      {reduced ? (
+      {reduced || low ? (
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(10,138,82,0.08),transparent_70%)]" />
       ) : (
         <canvas ref={ref} className="w-full h-full" />

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { usePolling } from "@/lib/usePolling";
 import { api, fmtMoney, fmtQty } from "@/lib/format";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { FlashCell } from "@/components/anim/FlashCell";
@@ -10,7 +11,9 @@ import { ParticleHero } from "@/components/anim/ParticleHero";
 import { PixelMorphEntry } from "@/components/rating/PixelMorphEntry";
 import { SoccerBall } from "@/components/SoccerBall";
 import { RansomText, ransomParts } from "@/components/RansomText";
+import { ComplianceNote } from "@/components/ComplianceNote";
 import { useT, useLang } from "@/lib/i18n";
+import { tName } from "@/lib/data-i18n";
 import { useTheme } from "@/lib/theme";
 
 type Asset = {
@@ -78,25 +81,23 @@ export default function Home() {
   const [err, setErr] = useState("");
   const reduced = useReducedMotion();
 
-  useEffect(() => {
-    const load = () =>
-      api<Asset[]>("/api/assets")
-        .then((a) => {
-          setAssets(a);
-          setErr("");
-        })
-        .catch((e) => setErr(e.message))
-        .finally(() => setLoading(false));
-    load();
-    const t = setInterval(load, 2000);
-    return () => clearInterval(t);
-  }, []);
+  // 可见性感知轮询:切到后台自动暂停,回前台立即刷新(省电、省流量)
+  usePolling(() => {
+    api<Asset[]>("/api/assets")
+      .then((a) => {
+        setAssets(a);
+        setErr("");
+      })
+      .catch((e) => setErr(e.message))
+      .finally(() => setLoading(false));
+  }, 2000);
 
   return (
     <div className="space-y-10">
       <SoccerBall />
       <section className="relative text-center pt-12 pb-6 sm:pt-20 sm:pb-10">
-        <ParticleHero />
+        {/* 碳分子背景仅在浅色模式显示；深色模式用星空背景，避免叠加 */}
+        {!dark && <ParticleHero />}
         <motion.p
           className="text-accent font-semibold mb-4 tracking-tight"
           initial={reduced ? false : { opacity: 0, y: 12 }}
@@ -105,9 +106,9 @@ export default function Home() {
         >
           {t.kicker}
         </motion.p>
-        <h1 className={`text-5xl sm:text-6xl font-semibold tracking-tight leading-[1.05] mb-6 ${dark ? "ransom-line" : ""}`}>
+        <h1 className={`text-4xl sm:text-6xl font-semibold tracking-tight ${lang === "zh" ? "leading-tight" : "leading-[1.05]"} mb-6 ${dark ? "ransom-line" : ""}`}>
           {t.heroLines.map((line, li) => (
-            // key 含 lang+theme：切换语言或主题时整体重挂载，每个字重放逐字动画
+            // key 含 lang+theme：切语言或切换 dark/light 时整体重挂载,每个字重放逐字出场动画
             <span key={`${lang}-${theme}-${li}`} className="block">
               {[...line].map((ch, i) => {
                 if (ch === " ")
@@ -176,6 +177,7 @@ export default function Home() {
             </Link>
           </motion.span>
         </motion.div>
+        <ComplianceNote className="text-center mt-7 max-w-xl mx-auto" />
       </section>
 
       <section className="py-2">
@@ -198,13 +200,13 @@ export default function Home() {
             <table className="w-full text-sm">
               <thead className="text-muted text-xs">
                 <tr className="border-b border-border">
-                  <th className="text-left font-medium px-5 py-3">{t.thSymbolProject}</th>
+                  <th className="text-left font-medium px-3 sm:px-5 py-3">{t.thSymbolProject}</th>
                   <th className="text-left font-medium px-3 py-3 hidden md:table-cell">{t.thStandard}</th>
                   <th className="text-right font-medium px-3 py-3">{t.thLastPrice}</th>
                   <th className="text-right font-medium px-3 py-3">{t.thChange24h}</th>
                   <th className="text-center font-medium px-3 py-3 hidden lg:table-cell">{t.thTrend24h}</th>
                   <th className="text-right font-medium px-3 py-3 hidden sm:table-cell">{t.thBidAsk}</th>
-                  <th className="text-right font-medium px-5 py-3">{t.thVolume24h}</th>
+                  <th className="text-right font-medium px-3 sm:px-5 py-3">{t.thVolume24h}</th>
                 </tr>
               </thead>
               <tbody>
@@ -216,10 +218,10 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: reduced ? 0 : i * 0.05, duration: 0.35 }}
                   >
-                    <td className="px-5 py-3">
+                    <td className="px-3 sm:px-5 py-3">
                       <Link href={`/market/${a.symbol}`} className="block group">
                         <div className="font-medium group-hover:text-accent transition-colors">{a.symbol}</div>
-                        <div className="text-xs text-muted truncate max-w-[200px]">{a.name}</div>
+                        <div className="text-xs text-muted truncate max-w-[44vw] sm:max-w-[200px]">{tName(a.symbol, a.name, lang)}</div>
                       </Link>
                     </td>
                     <td className="px-3 py-3 hidden md:table-cell">
@@ -254,7 +256,7 @@ export default function Home() {
                       <span className="text-muted mx-1">/</span>
                       <span className="text-down">{a.bestAsk == null ? "—" : fmtMoney(a.bestAsk)}</span>
                     </td>
-                    <td className="px-5 py-3 text-right tnum text-muted">{fmtQty(a.volume24h)}</td>
+                    <td className="px-3 sm:px-5 py-3 text-right tnum text-muted">{fmtQty(a.volume24h)}</td>
                   </motion.tr>
                 ))}
               </tbody>

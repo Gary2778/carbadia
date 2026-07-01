@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
+import { useLowPower } from "@/lib/useLowPower";
 
 // 一个能抓起来甩、会落地弹跳/滚动的小足球。画布 pointer-events:none，
 // 只有按在球上时才接管指针，别处点击照常穿透到页面。
@@ -79,9 +80,10 @@ function drawBall(ctx: CanvasRenderingContext2D, x: number, y: number, r: number
 export function SoccerBall() {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const reduced = useReducedMotion();
+  const low = useLowPower(); // 手机/触屏:鼠标玩法用不上,且物理 rAF + 全局指针监听会拖慢、干扰滚动
 
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || low) return;
     const canvas = ref.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -89,6 +91,7 @@ export function SoccerBall() {
 
     let raf = 0;
     let running = false;
+    let last = 0; // 上一帧时间戳,用于按真实耗时缩放(高刷新率屏幕不再变快)
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     let W = 0;
     let H = 0;
@@ -108,17 +111,19 @@ export function SoccerBall() {
     function start() {
       if (!running) {
         running = true;
+        last = performance.now();
         raf = requestAnimationFrame(loop);
       }
     }
 
-    function step() {
+    function step(dt: number) {
       if (drag.on) return; // 抓着时由指针驱动
-      b.vy += GRAVITY;
-      b.vx *= AIR;
-      b.vy *= AIR;
-      b.x += b.vx;
-      b.y += b.vy;
+      const air = Math.pow(AIR, dt); // 阻尼/摩擦按帧数复利,保持与帧率无关
+      b.vy += GRAVITY * dt;
+      b.vx *= air;
+      b.vy *= air;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
 
       if (b.x < R) { b.x = R; b.vx = -b.vx * REST; }
       if (b.x > W - R) { b.x = W - R; b.vx = -b.vx * REST; }
@@ -126,15 +131,15 @@ export function SoccerBall() {
       if (b.y > H - R) {
         b.y = H - R;
         b.vy = -b.vy * REST;
-        b.vx *= GROUND_FRICTION;
+        b.vx *= Math.pow(GROUND_FRICTION, dt);
         if (Math.abs(b.vy) < 1.2) b.vy = 0; // 停止微弹
       }
       const onGround = b.y >= H - R - 0.5;
-      if (onGround && b.vy === 0) b.vx *= ROLL_FRICTION;
+      if (onGround && b.vy === 0) b.vx *= Math.pow(ROLL_FRICTION, dt);
 
       // 旋转：地面滚动用速度换算，空中保持自转
-      b.va = onGround ? -b.vx / R : b.va * 0.99;
-      b.angle += b.va;
+      b.va = onGround ? -b.vx / R : b.va * Math.pow(0.99, dt);
+      b.angle += b.va * dt;
 
       // 接近静止则停机
       if (onGround && Math.abs(b.vx) < 0.05 && b.vy === 0) {
@@ -144,7 +149,10 @@ export function SoccerBall() {
     }
 
     function loop() {
-      step();
+      const now = performance.now();
+      const dt = Math.min((now - last) / 16.6667, 3); // 归一到 60fps 的帧数,clamp 防后台回来时跳变
+      last = now;
+      step(dt);
       ctx!.clearRect(0, 0, W, H);
       drawBall(ctx!, b.x, b.y, R, b.angle);
       if (running || drag.on) raf = requestAnimationFrame(loop);
@@ -214,8 +222,8 @@ export function SoccerBall() {
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [reduced]);
+  }, [reduced, low]);
 
-  if (reduced) return null;
+  if (reduced || low) return null;
   return <canvas ref={ref} aria-hidden className="fixed inset-0 z-[15]" style={{ width: "100vw", height: "100vh", pointerEvents: "none" }} />;
 }
