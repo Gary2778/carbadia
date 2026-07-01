@@ -85,6 +85,7 @@ model Order {
   sellTrades Trade[] @relation("SellOrder")
 
   @@index([assetId, side, status])
+  @@index([userId, status])
 }
 
 // 成交记录
@@ -106,6 +107,8 @@ model Trade {
   seller    User  @relation("SellerTrades", fields: [sellerId], references: [id])
 
   @@index([assetId, createdAt])
+  @@index([buyerId, createdAt])
+  @@index([sellerId, createdAt])
 }
 
 // OTC(场外/挂牌)出售挂单

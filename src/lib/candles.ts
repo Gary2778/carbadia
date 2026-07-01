@@ -10,10 +10,10 @@ export const INTERVALS = {
 } as const;
 export type IntervalKey = keyof typeof INTERVALS;
 
+/** 输入必须按 createdAt 升序(调用方查询已 orderBy asc), 函数内不再复制排序 */
 export function bucketTrades(trades: CandleInput[], intervalMs: number): Candle[] {
-  const sorted = [...trades].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   const map = new Map<number, Candle>();
-  for (const tr of sorted) {
+  for (const tr of trades) {
     const bucket = Math.floor(tr.createdAt.getTime() / intervalMs) * intervalMs;
     const c = map.get(bucket);
     if (!c) {

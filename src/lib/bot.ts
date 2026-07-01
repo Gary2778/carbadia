@@ -10,6 +10,8 @@ const CASH_FLOOR = 1_000_000;
 const CASH_RESET = 50_000_000;
 const QTY_FLOOR = 10_000;
 const QTY_TOPUP = 1_000_000;
+const RETENTION_DAYS = 90; // 成交/终态订单保留天数(机器人 24/7 刷单, 不清理 SQLite 会无限膨胀)
+const CLEANUP_INTERVAL_MS = 6 * 3_600_000; // 清理间隔
 
 declare global {
   // dev HMR 下防止重复启动
@@ -24,13 +26,38 @@ export function startMarketBot() {
 }
 
 async function loop() {
+  let lastCleanupAt = 0; // 0 保证启动后首轮就清理一次
   for (;;) {
     try {
       await tick();
     } catch (e) {
       console.error("[bot] tick 失败", e);
     }
+    if (Date.now() - lastCleanupAt >= CLEANUP_INTERVAL_MS) {
+      lastCleanupAt = Date.now();
+      await cleanupHistory();
+    }
     await new Promise((r) => setTimeout(r, TICK_MS + Math.random() * 800));
+  }
+}
+
+// 数据保留: 删掉超过保留期的成交与已终结订单
+async function cleanupHistory() {
+  try {
+    const cutoff = new Date(Date.now() - RETENTION_DAYS * 86_400_000);
+    // 先删 Trade 再删 Order, 且只删不再被任何成交引用的订单, 避免外键约束失败
+    const trades = await prisma.trade.deleteMany({ where: { createdAt: { lt: cutoff } } });
+    const orders = await prisma.order.deleteMany({
+      where: {
+        status: { in: ["FILLED", "CANCELLED"] },
+        createdAt: { lt: cutoff },
+        buyTrades: { none: {} },
+        sellTrades: { none: {} },
+      },
+    });
+    console.log(`[bot] 历史清理完成: 成交 ${trades.count} 条, 订单 ${orders.count} 条`);
+  } catch (e) {
+    console.error("[bot] 历史清理失败", e);
   }
 }
 

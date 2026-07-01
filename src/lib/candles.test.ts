@@ -21,7 +21,7 @@ describe("bucketTrades", () => {
   });
 
   it("跨桶切分且按时间升序", () => {
-    const out = bucketTrades([tr(70, 20), tr(5, 10)], 60_000); // 乱序输入
+    const out = bucketTrades([tr(5, 10), tr(70, 20)], 60_000);
     expect(out).toHaveLength(2);
     expect(out[0].c).toBe(10);
     expect(out[1].o).toBe(20);
