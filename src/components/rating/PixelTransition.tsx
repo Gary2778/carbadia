@@ -39,7 +39,9 @@ export function PixelTransitionProvider({ children }: { children: React.ReactNod
   const reduced = useReducedMotion();
   const { theme } = useTheme();
   const darkRef = useRef(false);
-  darkRef.current = theme === "dark";
+  useEffect(() => {
+    darkRef.current = theme === "dark";
+  }, [theme]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const raf = useRef(0);
   const frameRef = useRef<() => void>(() => {});

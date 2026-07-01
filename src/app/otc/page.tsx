@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
+import { usePolling } from "@/lib/usePolling";
 import { api, fmtMoney, fmtQty } from "@/lib/format";
 import { Reveal } from "@/components/anim/Reveal";
 import { useToast } from "@/components/anim/Toast";
@@ -15,6 +16,7 @@ const DICT = {
     subtitle: "Over-the-counter block carbon-credit trades — sellers list, buyers fill directly",
     collapse: "Collapse",
     newListing: "+ New listing",
+    loading: "Loading…",
     emptyPre: "No listings",
     emptyMid: ", ",
     emptyLogin: "log in",
@@ -45,6 +47,7 @@ const DICT = {
     subtitle: "场外大宗碳信用交易 — 卖方挂牌，买方直接成交",
     collapse: "收起",
     newListing: "+ 发布挂牌",
+    loading: "加载中…",
     emptyPre: "暂无挂牌",
     emptyMid: "，",
     emptyLogin: "登录",
@@ -92,6 +95,7 @@ export default function OtcPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [me, setMe] = useState<Me>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
   const load = useCallback(async () => {
@@ -104,14 +108,16 @@ export default function OtcPage() {
       setListings(ls);
       setAssets(a);
       setMe(m);
+      setErr("");
     } catch (e) {
       setErr((e as Error).message);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // 轮询而非一次性加载:别人新发布的挂牌、被买走的挂牌都能自动出现/消失
+  usePolling(load, 5000);
 
   return (
     <div className="space-y-4">
@@ -129,13 +135,18 @@ export default function OtcPage() {
         )}
       </div>
 
-      {err && <div className="text-down text-sm">{err}</div>}
+      {/* 已有数据时刷新失败只提示,不遮挡列表;无数据时的错误在下方卡片里展示 */}
+      {err && listings.length > 0 && <div className="text-down text-sm">{err}</div>}
 
       {showCreate && me && <CreateListing assets={assets} onDone={() => { setShowCreate(false); load(); }} />}
 
       <Reveal>
         <div className="rounded-2xl border border-border bg-surface shadow-card overflow-hidden">
-          {listings.length === 0 ? (
+          {loading ? (
+            <div className="p-10 text-center text-muted">{t.loading}</div>
+          ) : listings.length === 0 && err ? (
+            <div className="p-10 text-center text-down">{err}</div>
+          ) : listings.length === 0 ? (
             <div className="p-10 text-center text-muted">{t.emptyPre}{!me && <>{t.emptyMid}<Link href="/login" className="text-accent">{t.emptyLogin}</Link>{t.emptyPost}</>}</div>
           ) : (
             <div className="overflow-x-auto">
@@ -285,9 +296,10 @@ function BuyListing({ listing, onDone }: { listing: Listing; onDone: () => void 
 
 function CancelListing({ id, onDone }: { id: string; onDone: () => void }) {
   const t = useT(DICT);
+  const toast = useToast();
   const [busy, setBusy] = useState(false);
   return (
-    <button disabled={busy} onClick={async () => { setBusy(true); try { await api(`/api/otc/${id}`, { method: "DELETE" }); onDone(); } catch { setBusy(false); } }}
+    <button disabled={busy} onClick={async () => { setBusy(true); try { await api(`/api/otc/${id}`, { method: "DELETE" }); onDone(); } catch (e) { toast("err", (e as Error).message); setBusy(false); } }}
       className="text-xs text-muted hover:text-down disabled:opacity-40">{t.cancelListing}</button>
   );
 }

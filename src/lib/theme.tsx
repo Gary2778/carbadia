@@ -26,9 +26,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // 挂载后读取偏好（SSR/首帧按默认深色，缺省时无需 setState，避免无谓重渲染）
+  // 挂载后读取偏好（SSR/首帧按默认浅色，缺省时无需 setState，避免无谓重渲染）
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 水合安全模式:SSR 按默认值渲染,挂载后才能读 localStorage 纠正
     if (saved === "light" || saved === "dark") apply(saved);
   }, []);
 

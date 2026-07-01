@@ -6,11 +6,15 @@ import { useEffect, useRef } from "react";
  * 可见性感知的轮询:页面在前台时每 `ms` 执行一次 `fn`;切到后台(document.hidden)时
  * 完全停掉定时器,回到前台时立即执行一次并恢复 → 后台不空跑省电/省流量,回前台数据即时刷新。
  *
- * `fn` 存进 ref 并每次渲染更新,所以闭包始终新鲜,无需把它放进依赖。
+ * `fn` 存进 ref 并在每次渲染后更新,所以闭包始终新鲜,无需把它放进依赖。
+ * `restartKey` 变化时立即重启轮询(先执行一次)——用于标的/周期切换后不等下一个 tick。
  */
-export function usePolling(fn: () => void, ms: number) {
+export function usePolling(fn: () => void, ms: number, restartKey?: unknown) {
   const saved = useRef(fn);
-  saved.current = fn;
+
+  useEffect(() => {
+    saved.current = fn;
+  });
 
   useEffect(() => {
     let id: ReturnType<typeof setInterval> | null = null;
@@ -35,5 +39,5 @@ export function usePolling(fn: () => void, ms: number) {
       stop();
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [ms]);
+  }, [ms, restartKey]);
 }

@@ -59,6 +59,13 @@ export function Nav() {
   const [loaded, setLoaded] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false); // 移动端汉堡菜单
+  const [prevPath, setPrevPath] = useState(pathname);
+
+  // 路由变化(浏览器前进/后退等)自动收起菜单 —— 渲染期状态调整,不走 effect
+  if (prevPath !== pathname) {
+    setPrevPath(pathname);
+    setOpen(false);
+  }
   const { enter } = useRatingTransition();
   const reduced = useReducedMotion();
   const low = useLowPower();
@@ -83,9 +90,6 @@ export function Nav() {
       .catch(() => setMe(null))
       .finally(() => setLoaded(true));
   }, [pathname]);
-
-  // 路由变化(点了菜单里的链接)自动收起菜单
-  useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);

@@ -17,6 +17,7 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
     if (saved === "zh" || saved === "en") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 水合安全模式:SSR 按默认英文渲染,挂载后才能读 localStorage 纠正
       setLangState(saved);
       document.documentElement.lang = saved === "zh" ? "zh-CN" : "en";
     }

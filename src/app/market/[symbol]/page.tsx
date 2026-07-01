@@ -12,11 +12,13 @@ import { useToast } from "@/components/anim/Toast";
 import { ComplianceNote } from "@/components/ComplianceNote";
 import { useT, useLang } from "@/lib/i18n";
 import { tName, tProjectType, tCountry, tRegistry } from "@/lib/data-i18n";
+import { usePolling } from "@/lib/usePolling";
 import type { Candle, IntervalKey } from "@/lib/candles";
 
 const DICT = {
   en: {
     loading: "Loading…",
+    refreshFailed: "Data refresh failed, retrying…",
     lastPrice: "Last price",
     high24h: "24h high / low / vol",
     projectType: "Project type",
@@ -67,6 +69,7 @@ const DICT = {
   },
   zh: {
     loading: "加载中…",
+    refreshFailed: "数据刷新失败，正在重试…",
     lastPrice: "最新成交价",
     high24h: "24h 高 / 低 / 量",
     projectType: "项目类型",
@@ -171,26 +174,23 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
     api("/api/auth/me").then((u) => setLoggedIn(!!u)).catch(() => setLoggedIn(false));
   }, []);
 
-  useEffect(() => {
-    load();
-    const t = setInterval(load, 2000);
-    return () => clearInterval(t);
-  }, [load]);
+  // 可见性感知轮询(后台自动暂停);切换标的/周期时立即重启刷新
+  usePolling(load, 2000, symbol);
+  usePolling(loadCandles, 5000, `${symbol}:${period}`);
 
-  useEffect(() => {
-    loadCandles();
-    const t = setInterval(loadCandles, 5000);
-    return () => clearInterval(t);
-  }, [loadCandles]);
-
-  if (err) return <div className="text-down p-8 text-center">{err}</div>;
-  if (!data) return <div className="text-muted p-8 text-center">{t.loading}</div>;
+  // 只有还没拿到过数据时才整页报错;已有数据时轮询失败不能卸载页面(否则下单表单会被打断)
+  if (!data) {
+    if (err) return <div className="text-down p-8 text-center">{err}</div>;
+    return <div className="text-muted p-8 text-center">{t.loading}</div>;
+  }
 
   const { asset, stats, book, trades, holding, myOrders } = data;
   const maxDepth = Math.max(1, ...book.bids.map((b) => b.quantity), ...book.asks.map((a) => a.quantity));
 
   return (
     <div className="space-y-4">
+      {err && <div className="text-down text-sm">{t.refreshFailed}</div>}
+
       {/* 标的头部 */}
       <div className="rounded-2xl border border-border bg-surface shadow-card p-5 flex flex-wrap items-center gap-x-8 gap-y-3">
         <div>

@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
-import { api, fmtMoney, fmtQty, fmtTime } from "@/lib/format";
+import { api, ApiError, fmtMoney, fmtQty, fmtTime } from "@/lib/format";
+import { usePolling } from "@/lib/usePolling";
 import { NumberTicker } from "@/components/anim/NumberTicker";
 import { Reveal } from "@/components/anim/Reveal";
+import { useToast } from "@/components/anim/Toast";
 import { useT, useLang } from "@/lib/i18n";
 import { tName } from "@/lib/data-i18n";
 
@@ -13,6 +15,7 @@ const DICT = {
     goToLogin: "Go to log in",
     notLoggedIn: "You're not logged in.",
     loading: "Loading…",
+    loadFailed: "Failed to load, retrying…",
     myPortfolio: "My Portfolio",
     totalAssets: "Total assets",
     availableCash: "Available cash",
@@ -50,6 +53,7 @@ const DICT = {
     goToLogin: "前往登录",
     notLoggedIn: "未登录",
     loading: "加载中…",
+    loadFailed: "加载失败，正在重试…",
     myPortfolio: "我的资产",
     totalAssets: "总资产估值",
     availableCash: "可用现金",
@@ -101,32 +105,43 @@ export default function PortfolioPage() {
   const { lang } = useLang();
   const [p, setP] = useState<Portfolio | null>(null);
   const [err, setErr] = useState("");
+  const [unauthorized, setUnauthorized] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setP(await api<Portfolio>("/api/portfolio"));
+      setErr("");
+      setUnauthorized(false);
     } catch (e) {
-      setErr((e as Error).message);
+      // 只有明确的 401 才引导登录；其他错误（网络抖动/服务端异常）不应误判为未登录
+      if (e instanceof ApiError && e.status === 401) {
+        setUnauthorized(true);
+      } else {
+        setErr((e as Error).message);
+      }
     }
   }, []);
 
-  useEffect(() => {
-    load();
-    const t = setInterval(load, 3000);
-    return () => clearInterval(t);
-  }, [load]);
+  // 可见性感知轮询:后台标签页自动暂停
+  usePolling(load, 3000);
 
-  if (err) return (
+  if (unauthorized) return (
     <div className="text-center py-16 space-y-3">
       <div className="text-muted">{t.notLoggedIn}</div>
       <Link href="/login" className="text-accent">{t.goToLogin} →</Link>
     </div>
   );
-  if (!p) return <div className="text-muted text-center py-16">{t.loading}</div>;
+  if (!p) {
+    if (err) return <div className="text-down text-sm text-center py-16">{t.loadFailed}</div>;
+    return <div className="text-muted text-center py-16">{t.loading}</div>;
+  }
 
   return (
     <div className="space-y-5">
       <h1 className="text-xl font-bold">{t.myPortfolio}</h1>
+
+      {/* 轮询失败不清空已有数据，只提示刷新异常 */}
+      {err && <div className="text-down text-sm">{err}</div>}
 
       <Reveal>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -170,9 +185,7 @@ export default function PortfolioPage() {
                   <td className="px-3 py-2.5 text-right tnum">{o.price == null ? t.market : fmtMoney(o.price)}</td>
                   <td className="px-3 py-2.5 text-right tnum">{fmtQty(o.filledQuantity)} / {fmtQty(o.quantity)}</td>
                   <td className="px-4 py-2.5 text-right">
-                    <button
-                      onClick={async () => { try { await api(`/api/orders/${o.id}`, { method: "DELETE" }); load(); } catch {} }}
-                      className="text-xs text-muted hover:text-down">{t.cancel}</button>
+                    <CancelBtn url={`/api/orders/${o.id}`} label={t.cancel} onDone={load} />
                   </td>
                 </tr>
               ))}
@@ -191,8 +204,7 @@ export default function PortfolioPage() {
                   <td className="px-3 py-2.5 text-right tnum text-accent">¥{fmtMoney(l.pricePerUnit)}</td>
                   <td className="px-3 py-2.5 text-right tnum">{fmtQty(l.quantity)}</td>
                   <td className="px-4 py-2.5 text-right">
-                    <button onClick={async () => { try { await api(`/api/otc/${l.id}`, { method: "DELETE" }); load(); } catch {} }}
-                      className="text-xs text-muted hover:text-down">{t.cancelListing}</button>
+                    <CancelBtn url={`/api/otc/${l.id}`} label={t.cancelListing} onDone={load} />
                   </td>
                 </tr>
               ))}
@@ -220,6 +232,28 @@ export default function PortfolioPage() {
         </Card>
       </Reveal>
     </div>
+  );
+}
+
+// 撤单/撤挂牌共用：busy 态防连点，失败用 toast 提示而不是静默吞掉
+function CancelBtn({ url, label, onDone }: { url: string; label: string; onDone: () => void }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          await api(url, { method: "DELETE" });
+          onDone();
+        } catch (e) {
+          toast("err", (e as Error).message);
+          setBusy(false);
+        }
+      }}
+      className="text-xs text-muted hover:text-down disabled:opacity-40"
+    >{label}</button>
   );
 }
 
