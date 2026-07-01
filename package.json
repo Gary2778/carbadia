@@ -11,6 +11,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset --force",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:if-empty": "tsx prisma/seed-if-empty.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
