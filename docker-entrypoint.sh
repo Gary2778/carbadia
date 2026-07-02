@@ -19,20 +19,22 @@ if [ -z "$SESSION_SECRET" ]; then
   exit 1
 fi
 
-# 空间自愈：volume 写满时迁移与写入都会失败（SQLite 错误 13：database or disk is full）。
-# 开机先按保留窗口清理历史成交/终态订单，释放的页会被迁移与后续写入复用（无需 VACUUM）。
-# journal_mode=OFF：磁盘满时连回滚日志都写不下；demo 数据可再生，用无日志删除换零额外空间。
-# 首次启动表不存在时报错属预期，|| true 兜底。
+# 空间兜底：volume 写满时迁移与写入都会失败（SQLite 错误 13）。开机小批量清一点过期成交,
+# 给迁移腾页;大头由应用内清理任务分批在线处理(网络卷 IO 慢, 大 DELETE 会把启动卡住几十分钟)。
+# 每批一个独立小事务, 默认 journal, 任何时刻中断都安全;首次启动表不存在时报错属预期, || true 兜底。
 RETENTION="${RETENTION_DAYS:-7}"
-echo "[deploy] 清理 ${RETENTION} 天前的历史成交/订单…"
-npx prisma db execute --stdin --url "$DATABASE_URL" <<SQL || true
-PRAGMA journal_mode=OFF;
-DELETE FROM "Trade" WHERE createdAt < CAST((strftime('%s','now') - $RETENTION * 86400) AS INTEGER) * 1000;
-DELETE FROM "Order" WHERE status IN ('FILLED','CANCELLED')
-  AND createdAt < CAST((strftime('%s','now') - $RETENTION * 86400) AS INTEGER) * 1000
-  AND id NOT IN (SELECT buyOrderId FROM "Trade")
-  AND id NOT IN (SELECT sellOrderId FROM "Trade");
+echo "[deploy] 开机清理: 删除 ${RETENTION} 天前的成交(每批 1 万行, 最多 5 批)…"
+i=0
+while [ $i -lt 5 ]; do
+  npx prisma db execute --stdin --url "$DATABASE_URL" <<SQL || break
+DELETE FROM "Trade" WHERE rowid IN (
+  SELECT rowid FROM "Trade"
+  WHERE createdAt < CAST((strftime('%s','now') - $RETENTION * 86400) AS INTEGER) * 1000
+  LIMIT 10000
+);
 SQL
+  i=$((i+1))
+done
 
 # P3009 自愈：部署重叠期旧容器还在写库，迁移可能被写锁打断并留下"未完成"记录，
 # 之后每次启动 migrate deploy 都会拒绝执行。清掉未完成记录让其重放（迁移 SQL 均为幂等）。

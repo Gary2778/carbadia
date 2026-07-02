@@ -43,21 +43,40 @@ async function loop() {
   }
 }
 
-// 数据保留: 删掉超过保留期的成交与已终结订单
+// 数据保留: 删掉超过保留期的成交与已终结订单。
+// 必须分小批执行: Railway 网络卷上一条几十万行的 DELETE 会持锁几十分钟,
+// 期间用户下单全部超时;分批 + 批间让出事件循环, 在线清理不影响交易。
+const CLEANUP_BATCH = 5_000;
+const CLEANUP_MAX_BATCHES = 200; // 单轮上限 100 万行, 防止无限循环
 async function cleanupHistory() {
   try {
-    const cutoff = new Date(Date.now() - RETENTION_DAYS * 86_400_000);
-    // 先删 Trade 再删 Order, 且只删不再被任何成交引用的订单, 避免外键约束失败
-    const trades = await prisma.trade.deleteMany({ where: { createdAt: { lt: cutoff } } });
-    const orders = await prisma.order.deleteMany({
-      where: {
-        status: { in: ["FILLED", "CANCELLED"] },
-        createdAt: { lt: cutoff },
-        buyTrades: { none: {} },
-        sellTrades: { none: {} },
-      },
-    });
-    console.log(`[bot] 历史清理完成: 成交 ${trades.count} 条, 订单 ${orders.count} 条`);
+    const cutoffMs = Date.now() - RETENTION_DAYS * 86_400_000;
+    let trades = 0;
+    let orders = 0;
+    for (let i = 0; i < CLEANUP_MAX_BATCHES; i++) {
+      const n = await prisma.$executeRaw`
+        DELETE FROM "Trade" WHERE rowid IN (
+          SELECT rowid FROM "Trade" WHERE createdAt < ${cutoffMs} LIMIT ${CLEANUP_BATCH}
+        )`;
+      trades += n;
+      if (n < CLEANUP_BATCH) break;
+      await new Promise((r) => setTimeout(r, 300)); // 让出写锁, 用户下单可插队
+    }
+    for (let i = 0; i < CLEANUP_MAX_BATCHES; i++) {
+      // 只删不再被任何成交引用的订单, 避免外键约束失败
+      const n = await prisma.$executeRaw`
+        DELETE FROM "Order" WHERE rowid IN (
+          SELECT o.rowid FROM "Order" o
+          WHERE o.status IN ('FILLED','CANCELLED') AND o.createdAt < ${cutoffMs}
+            AND NOT EXISTS (SELECT 1 FROM "Trade" t WHERE t.buyOrderId = o.id)
+            AND NOT EXISTS (SELECT 1 FROM "Trade" t WHERE t.sellOrderId = o.id)
+          LIMIT ${CLEANUP_BATCH}
+        )`;
+      orders += n;
+      if (n < CLEANUP_BATCH) break;
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    console.log(`[bot] 历史清理完成: 成交 ${trades} 条, 订单 ${orders} 条`);
   } catch (e) {
     console.error("[bot] 历史清理失败", e);
   }
