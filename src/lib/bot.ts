@@ -10,7 +10,9 @@ const CASH_FLOOR = 1_000_000;
 const CASH_RESET = 50_000_000;
 const QTY_FLOOR = 10_000;
 const QTY_TOPUP = 1_000_000;
-const RETENTION_DAYS = 90; // 成交/终态订单保留天数(机器人 24/7 刷单, 不清理 SQLite 会无限膨胀)
+// 成交/终态订单保留天数(机器人 24/7 刷单, 不清理 SQLite 会无限膨胀)。
+// 生产实测 ~35MB/天, 500MB volume 只够放一周多 —— 默认 7 天, 可用 RETENTION_DAYS 环境变量调整(与 entrypoint 的开机清理共用)。
+const RETENTION_DAYS = Number(process.env.RETENTION_DAYS ?? 7);
 const CLEANUP_INTERVAL_MS = 6 * 3_600_000; // 清理间隔
 
 declare global {

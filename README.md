@@ -72,6 +72,7 @@ src/
 | `DATABASE_URL` | 是 | SQLite 连接串。线上必须指向持久卷,形如 `file:/data/carbadia.db`(容器启动脚本会校验前缀) |
 | `SESSION_SECRET` | 是 | 会话 cookie 的 HMAC 签名密钥,用 `openssl rand -hex 32` 生成;生产环境缺失会拒绝启动(本地 dev 有内置回退) |
 | `BOT_DISABLED` | 否 | 设为 `1` 时不启动做市机器人 |
+| `RETENTION_DAYS` | 否 | 历史成交/终态订单保留天数,默认 `7`(机器人清理任务与容器启动清理共用;500MB 卷约容纳一周数据) |
 
 ## 常用脚本
 
