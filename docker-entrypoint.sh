@@ -19,12 +19,20 @@ if [ -z "$SESSION_SECRET" ]; then
   exit 1
 fi
 
+# P3009 自愈：部署重叠期旧容器还在写库，迁移可能被写锁打断并留下"未完成"记录，
+# 之后每次启动 migrate deploy 都会拒绝执行。清掉未完成记录让其重放（迁移 SQL 均为幂等）。
+# 首次启动时 _prisma_migrations 表不存在，报错属预期，|| true 兜底。
+echo "DELETE FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL;" \
+  | npx prisma db execute --stdin --url "$DATABASE_URL" || true
+
 echo "[deploy] 应用数据库迁移…"
 npx prisma migrate deploy
 
-# WAL 模式：读写并发更好，且避免机器人写库时把页面读请求锁住
+# WAL 模式：读写并发更好，且避免机器人写库时把页面读请求锁住。
+# WAL 一经设置持久化在库文件上；若本次因写锁失败，沿用现有模式启动，下次部署再试。
 echo "[deploy] 启用 SQLite WAL…"
-echo "PRAGMA journal_mode=WAL;" | npx prisma db execute --stdin --url "$DATABASE_URL"
+echo "PRAGMA journal_mode=WAL;" | npx prisma db execute --stdin --url "$DATABASE_URL" \
+  || echo "[deploy] 警告：WAL 设置失败（库可能被占用），沿用现有 journal 模式继续启动" >&2
 
 echo "[deploy] 检查种子数据（仅当数据库为空时写入）…"
 npm run db:seed:if-empty
