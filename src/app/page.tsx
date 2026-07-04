@@ -13,6 +13,7 @@ import { SoccerBall } from "@/components/SoccerBall";
 import { RansomText, ransomParts } from "@/components/RansomText";
 import { ComplianceNote } from "@/components/ComplianceNote";
 import { useT, useLang } from "@/lib/i18n";
+import { isCJK, splitsByWord } from "@/i18n/config";
 import { tName } from "@/lib/data-i18n";
 import { useTheme } from "@/lib/theme";
 
@@ -32,47 +33,8 @@ type Asset = {
   spark: number[];
 };
 
-const DICT = {
-  en: {
-    kicker: "Carbadia · Carbon Credit Exchange · Demo",
-    heroLines: ["A fair price for", "every tonne of carbon"],
-    heroSubtitle:
-      "Trade verified carbon reductions. Order-book matched standardized spot, OTC listings for block trades — clear, transparent, settled in one place.",
-    startTrading: "Start trading",
-    browseOtc: "Browse OTC →",
-    spotMarket: "Spot market",
-    instrumentsMeta: (n: number) => `${n} instruments · live demo data`,
-    loading: "Loading…",
-    thSymbolProject: "Symbol / Project",
-    thStandard: "Standard",
-    thLastPrice: "Last price",
-    thChange24h: "24h change",
-    thTrend24h: "24h trend",
-    thBidAsk: "Bid / Ask",
-    thVolume24h: "24h volume (t)",
-  },
-  zh: {
-    kicker: "Carbadia · 碳信用交易所 · 模拟盘",
-    heroLines: ["让每一吨碳", "都有公允的价格"],
-    heroSubtitle:
-      "交易经核证的碳减排量。订单簿撮合的标准化现货，面向大宗的 OTC 挂牌，清晰透明，一处成交。",
-    startTrading: "开始交易",
-    browseOtc: "浏览 OTC 挂牌 →",
-    spotMarket: "现货行情",
-    instrumentsMeta: (n: number) => `${n} 个标的 · 实时模拟行情`,
-    loading: "加载中…",
-    thSymbolProject: "代码 / 项目",
-    thStandard: "标准",
-    thLastPrice: "最新价",
-    thChange24h: "24h 涨跌",
-    thTrend24h: "24h 走势",
-    thBidAsk: "买一 / 卖一",
-    thVolume24h: "24h 量(吨)",
-  },
-};
-
 export default function Home() {
-  const t = useT(DICT);
+  const t = useT("home");
   const { lang } = useLang();
   const { theme } = useTheme();
   const dark = theme === "dark";
@@ -106,12 +68,13 @@ export default function Home() {
         >
           {t.kicker}
         </motion.p>
-        <h1 className={`text-4xl sm:text-6xl font-semibold tracking-tight ${lang === "zh" ? "leading-tight" : "leading-[1.05]"} mb-6 ${dark ? "ransom-line" : ""}`}>
+        <h1 className={`text-4xl sm:text-6xl font-semibold tracking-tight ${isCJK(lang) ? "leading-tight" : "leading-[1.05]"} mb-6 ${dark ? "ransom-line" : ""}`}>
           {t.heroLines.map((line, li) => (
             // key 含 lang+theme：切语言或切换 dark/light 时整体重挂载,每个字重放逐字出场动画
             <span key={`${lang}-${theme}-${li}`} className="block">
-              {[...line].map((ch, i) => {
-                if (ch === " ")
+              {/* 阿拉伯文字母连写:逐字符拆分会破坏字形,按词拆分动画 */}
+              {(splitsByWord(lang) ? line.split(/(\s+)/).filter(Boolean) : [...line]).map((ch, i) => {
+                if (/^\s+$/.test(ch))
                   // 空格保留为可换行的真实空白（英文标题词间距），不套 inline-block 以免被折叠
                   return <span key={`${lang}-${theme}-${i}`}>{" "}</span>;
                 const delay = reduced ? 0 : 0.06 * (li * line.length + i) + 0.15;
@@ -200,13 +163,13 @@ export default function Home() {
             <table className="w-full text-sm">
               <thead className="text-muted text-xs">
                 <tr className="border-b border-border">
-                  <th className="text-left font-medium px-3 sm:px-5 py-3">{t.thSymbolProject}</th>
-                  <th className="text-left font-medium px-3 py-3 hidden md:table-cell">{t.thStandard}</th>
-                  <th className="text-right font-medium px-3 py-3">{t.thLastPrice}</th>
-                  <th className="text-right font-medium px-3 py-3">{t.thChange24h}</th>
+                  <th className="text-start font-medium px-3 sm:px-5 py-3">{t.thSymbolProject}</th>
+                  <th className="text-start font-medium px-3 py-3 hidden md:table-cell">{t.thStandard}</th>
+                  <th className="text-end font-medium px-3 py-3">{t.thLastPrice}</th>
+                  <th className="text-end font-medium px-3 py-3">{t.thChange24h}</th>
                   <th className="text-center font-medium px-3 py-3 hidden lg:table-cell">{t.thTrend24h}</th>
-                  <th className="text-right font-medium px-3 py-3 hidden sm:table-cell">{t.thBidAsk}</th>
-                  <th className="text-right font-medium px-3 sm:px-5 py-3">{t.thVolume24h}</th>
+                  <th className="text-end font-medium px-3 py-3 hidden sm:table-cell">{t.thBidAsk}</th>
+                  <th className="text-end font-medium px-3 sm:px-5 py-3">{t.thVolume24h}</th>
                 </tr>
               </thead>
               <tbody>
@@ -227,12 +190,12 @@ export default function Home() {
                     <td className="px-3 py-3 hidden md:table-cell">
                       <span className="text-xs px-2 py-0.5 rounded bg-surface-2 border border-border">{a.standard}</span>
                     </td>
-                    <td className="px-3 py-3 text-right tnum font-medium">
+                    <td className="px-3 py-3 text-end tnum font-medium">
                       <FlashCell value={a.lastPrice} className="inline-block px-1 -mx-1">
-                        {a.lastPrice == null ? <span className="text-muted">—</span> : `¥${fmtMoney(a.lastPrice)}`}
+                        {a.lastPrice == null ? <span className="text-muted">—</span> : `$${fmtMoney(a.lastPrice)}`}
                       </FlashCell>
                     </td>
-                    <td className="px-3 py-3 text-right">
+                    <td className="px-3 py-3 text-end">
                       {a.change24h == null ? (
                         <span className="text-muted">—</span>
                       ) : (
@@ -251,12 +214,12 @@ export default function Home() {
                         <Sparkline data={a.spark} />
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-right tnum hidden sm:table-cell">
+                    <td className="px-3 py-3 text-end tnum hidden sm:table-cell">
                       <span className="text-up">{a.bestBid == null ? "—" : fmtMoney(a.bestBid)}</span>
                       <span className="text-muted mx-1">/</span>
                       <span className="text-down">{a.bestAsk == null ? "—" : fmtMoney(a.bestAsk)}</span>
                     </td>
-                    <td className="px-3 sm:px-5 py-3 text-right tnum text-muted">{fmtQty(a.volume24h)}</td>
+                    <td className="px-3 sm:px-5 py-3 text-end tnum text-muted">{fmtQty(a.volume24h)}</td>
                   </motion.tr>
                 ))}
               </tbody>

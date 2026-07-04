@@ -8,10 +8,7 @@ import { useT } from "@/lib/i18n";
 export function ThemeToggle() {
   const { theme, toggle } = useTheme();
   const dark = theme === "dark";
-  const tx = useT({
-    en: { toLight: "Switch to light mode", toDark: "Switch to dark mode" },
-    zh: { toLight: "切换到浅色模式", toDark: "切换到深色模式" },
-  });
+  const tx = useT("themeToggle");
 
   return (
     <button

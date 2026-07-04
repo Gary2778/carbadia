@@ -4,28 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { Candle } from "@/lib/candles";
 import { fmtMoney, fmtQty } from "@/lib/format";
-import { useT } from "@/lib/i18n";
-
-const DICT = {
-  en: {
-    waiting: "Waiting for market data…",
-    open: "Open",
-    high: "High",
-    low: "Low",
-    close: "Close",
-    vol: "Vol",
-    candles: (n: number) => `${n} candles`,
-  },
-  zh: {
-    waiting: "暂无成交数据，等待行情…",
-    open: "开",
-    high: "高",
-    low: "低",
-    close: "收",
-    vol: "量",
-    candles: (n: number) => `${n} 根 K 线`,
-  },
-};
+import { useT, useLang, htmlLang } from "@/lib/i18n";
 
 const W = 760;
 const H = 360;
@@ -35,7 +14,8 @@ const PAD_T = 26;
 const PAD_B = 8;
 
 export function CandleChart({ candles, lastPrice }: { candles: Candle[]; lastPrice: number | null }) {
-  const t = useT(DICT);
+  const t = useT("candleChart");
+  const { lang } = useLang();
   const reduced = useReducedMotion();
   const [hover, setHover] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -82,11 +62,12 @@ export function CandleChart({ candles, lastPrice }: { candles: Candle[]; lastPri
   }
 
   return (
-    <div className="relative">
+    // 图表坐标系恒为 LTR(时间从左到右),RTL 界面下也不翻转
+    <div className="relative" dir="ltr">
       <div className="absolute top-0 left-2 z-10 text-[11px] tnum text-muted flex flex-wrap gap-x-3 bg-surface/80 backdrop-blur px-2 py-0.5 rounded">
         {hc ? (
           <>
-            <span>{new Date(hc.t).toLocaleString("zh-CN", { hour12: false })}</span>
+            <span>{new Date(hc.t).toLocaleString(htmlLang(lang), { hour12: false })}</span>
             <span>{t.open} {fmtMoney(hc.o)}</span>
             <span className="text-up">{t.high} {fmtMoney(hc.h)}</span>
             <span className="text-down">{t.low} {fmtMoney(hc.l)}</span>

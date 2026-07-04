@@ -10,11 +10,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ symbol: string 
   try {
     const { symbol } = await ctx.params;
     const interval = new URL(req.url).searchParams.get("interval") ?? "1m";
-    if (!Object.hasOwn(INTERVALS, interval)) return fail("interval 必须是 1m/5m/1h/1d", 400);
+    if (!Object.hasOwn(INTERVALS, interval)) return fail("interval must be one of 1m/5m/1h/1d", 400);
     const cfg = INTERVALS[interval as IntervalKey];
 
     const asset = await prisma.asset.findUnique({ where: { symbol }, select: { id: true } });
-    if (!asset) return fail("标的不存在", 404);
+    if (!asset) return fail("Instrument not found", 404);
 
     const key = `${asset.id}:${interval}`;
     const hit = cache.get(key);

@@ -7,7 +7,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ symbol: string
   try {
     const { symbol } = await ctx.params;
     const asset = await prisma.asset.findUnique({ where: { symbol } });
-    if (!asset) return fail("标的不存在", 404);
+    if (!asset) return fail("Instrument not found", 404);
 
     const [book, trades, user] = await Promise.all([
       getOrderBook(asset.id),

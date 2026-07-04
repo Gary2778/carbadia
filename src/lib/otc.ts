@@ -18,16 +18,16 @@ export async function createListing(input: CreateListingInput) {
   const pricePerUnit = round2(input.pricePerUnit);
   const minQuantity = Math.max(1, Math.trunc(input.minQuantity ?? 1));
 
-  if (quantity <= 0) throw new OtcError("数量必须为正整数");
-  if (pricePerUnit <= 0) throw new OtcError("单价必须大于 0");
-  if (minQuantity > quantity) throw new OtcError("最小购买量不能大于挂牌数量");
+  if (quantity <= 0) throw new OtcError("Quantity must be a positive integer");
+  if (pricePerUnit <= 0) throw new OtcError("Unit price must be greater than 0");
+  if (minQuantity > quantity) throw new OtcError("Min buy cannot exceed listing quantity");
 
   return prisma.$transaction(async (tx) => {
     const holding = await tx.holding.findUnique({
       where: { userId_assetId: { userId: input.sellerId, assetId: input.assetId } },
     });
     const available = (holding?.quantity ?? 0) - (holding?.locked ?? 0);
-    if (available < quantity) throw new OtcError("可用持仓不足");
+    if (available < quantity) throw new OtcError("Insufficient available holdings");
 
     await tx.holding.update({
       where: { userId_assetId: { userId: input.sellerId, assetId: input.assetId } },
@@ -50,9 +50,9 @@ export async function createListing(input: CreateListingInput) {
 export async function cancelListing(sellerId: string, listingId: string) {
   return prisma.$transaction(async (tx) => {
     const listing = await tx.otcListing.findUnique({ where: { id: listingId } });
-    if (!listing) throw new OtcError("挂牌不存在");
-    if (listing.sellerId !== sellerId) throw new OtcError("无权操作该挂牌");
-    if (listing.status !== "ACTIVE") throw new OtcError("挂牌当前状态不可撤销");
+    if (!listing) throw new OtcError("Listing not found");
+    if (listing.sellerId !== sellerId) throw new OtcError("Not your listing");
+    if (listing.status !== "ACTIVE") throw new OtcError("Listing can no longer be cancelled");
 
     await tx.holding.update({
       where: { userId_assetId: { userId: sellerId, assetId: listing.assetId } },
@@ -66,22 +66,22 @@ export async function cancelListing(sellerId: string, listingId: string) {
 /** 购买 OTC 挂牌(可部分成交) */
 export async function buyListing(buyerId: string, listingId: string, qty: number) {
   const quantity = Math.trunc(qty);
-  if (quantity <= 0) throw new OtcError("购买数量必须为正整数");
+  if (quantity <= 0) throw new OtcError("Purchase quantity must be a positive integer");
 
   return prisma.$transaction(async (tx) => {
     const listing = await tx.otcListing.findUnique({ where: { id: listingId } });
-    if (!listing) throw new OtcError("挂牌不存在");
-    if (listing.status !== "ACTIVE") throw new OtcError("挂牌不可购买");
-    if (listing.sellerId === buyerId) throw new OtcError("不能购买自己的挂牌");
-    if (quantity > listing.quantity) throw new OtcError("超过挂牌可售数量");
+    if (!listing) throw new OtcError("Listing not found");
+    if (listing.status !== "ACTIVE") throw new OtcError("Listing is not available");
+    if (listing.sellerId === buyerId) throw new OtcError("You cannot buy your own listing");
+    if (quantity > listing.quantity) throw new OtcError("Exceeds available listing quantity");
     if (quantity < listing.minQuantity && quantity < listing.quantity) {
-      throw new OtcError(`低于最小购买量(${listing.minQuantity}吨)`);
+      throw new OtcError(`Below the minimum purchase (${listing.minQuantity} t)`);
     }
 
     const total = round2(listing.pricePerUnit * quantity);
     const buyer = await tx.user.findUnique({ where: { id: buyerId } });
-    if (!buyer) throw new OtcError("买方不存在");
-    if (buyer.cashBalance < total) throw new OtcError("可用现金不足");
+    if (!buyer) throw new OtcError("Buyer not found");
+    if (buyer.cashBalance < total) throw new OtcError("Insufficient available cash");
 
     // 资金: 买方 -> 卖方
     await tx.user.update({ where: { id: buyerId }, data: { cashBalance: { decrement: total } } });

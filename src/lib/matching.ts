@@ -26,22 +26,22 @@ export async function placeOrder(input: PlaceOrderInput) {
   const quantity = Math.trunc(input.quantity);
   const price = input.price != null ? round2(input.price) : null;
 
-  if (quantity <= 0) throw new TradingError("数量必须为正整数");
+  if (quantity <= 0) throw new TradingError("Quantity must be a positive integer");
   if (type === "LIMIT") {
-    if (price == null || price <= 0) throw new TradingError("限价单必须填写大于 0 的价格");
+    if (price == null || price <= 0) throw new TradingError("Limit orders require a price greater than 0");
   }
 
   return prisma.$transaction(async (tx) => {
     const asset = await tx.asset.findUnique({ where: { id: assetId } });
-    if (!asset) throw new TradingError("标的不存在");
+    if (!asset) throw new TradingError("Instrument not found");
 
     const user = await tx.user.findUnique({ where: { id: userId } });
-    if (!user) throw new TradingError("用户不存在");
+    if (!user) throw new TradingError("User not found");
 
     // ---- 下单前冻结资源 ----
     if (side === "BUY" && type === "LIMIT") {
       const lock = round2(price! * quantity);
-      if (user.cashBalance < lock) throw new TradingError("可用现金不足");
+      if (user.cashBalance < lock) throw new TradingError("Insufficient available cash");
       await tx.user.update({
         where: { id: userId },
         data: { cashBalance: { decrement: lock }, lockedCash: { increment: lock } },
@@ -52,7 +52,7 @@ export async function placeOrder(input: PlaceOrderInput) {
         where: { userId_assetId: { userId, assetId } },
       });
       const available = (holding?.quantity ?? 0) - (holding?.locked ?? 0);
-      if (available < quantity) throw new TradingError("可用持仓不足");
+      if (available < quantity) throw new TradingError("Insufficient available holdings");
       await tx.holding.update({
         where: { userId_assetId: { userId, assetId } },
         data: { locked: { increment: quantity } },
@@ -205,9 +205,9 @@ export async function placeOrder(input: PlaceOrderInput) {
 export async function cancelOrder(userId: string, orderId: string) {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({ where: { id: orderId } });
-    if (!order) throw new TradingError("订单不存在");
-    if (order.userId !== userId) throw new TradingError("无权操作该订单");
-    if (!["OPEN", "PARTIAL"].includes(order.status)) throw new TradingError("订单当前状态不可撤销");
+    if (!order) throw new TradingError("Order not found");
+    if (order.userId !== userId) throw new TradingError("Not your order");
+    if (!["OPEN", "PARTIAL"].includes(order.status)) throw new TradingError("Order can no longer be cancelled");
 
     const remaining = order.quantity - order.filledQuantity;
     if (order.side === "BUY" && order.price != null) {

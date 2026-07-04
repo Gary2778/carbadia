@@ -23,35 +23,8 @@ const LINKS: { href: string; key: LinkKey }[] = [
   { href: "/portfolio", key: "portfolio" },
 ];
 
-const DICT = {
-  en: {
-    demo: "Demo",
-    markets: "Markets",
-    otc: "OTC",
-    rating: "CCRC",
-    ratingFull: "Carbon Credit Rating Connoisseur",
-    portfolio: "Portfolio",
-    cash: "Available cash",
-    logout: "Log out",
-    login: "Log in",
-    register: "Sign up",
-  },
-  zh: {
-    demo: "模拟盘",
-    markets: "行情",
-    otc: "OTC 挂牌",
-    rating: "CCRC",
-    ratingFull: "碳信用评级鉴赏家",
-    portfolio: "我的资产",
-    cash: "可用现金",
-    logout: "退出",
-    login: "登录",
-    register: "注册",
-  },
-};
-
 export function Nav() {
-  const t = useT(DICT);
+  const t = useT("nav");
   const { lang } = useLang();
   const pathname = usePathname();
   const router = useRouter();
@@ -149,17 +122,17 @@ export function Nav() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 sm:gap-3 text-sm">
+        <div className="ms-auto flex items-center gap-2 sm:gap-3 text-sm">
           <ThemeToggle />
           <LanguageToggle />
           {/* 桌面:账户/登录区 */}
           <div className="hidden md:flex items-center gap-3">
             {!loaded ? null : me ? (
               <>
-                <div className="text-right hidden lg:block">
+                <div className="text-end hidden lg:block">
                   <div className="text-xs text-muted">{t.cash}</div>
                   <div className="tnum text-accent">
-                    ¥<NumberTicker value={me.cashBalance} />
+                    $<NumberTicker value={me.cashBalance} />
                   </div>
                 </div>
                 <div className="h-8 w-px bg-border hidden lg:block" />
@@ -185,8 +158,8 @@ export function Nav() {
           {/* 手机:汉堡按钮(≥44px 触控目标) */}
           <button
             type="button"
-            className="md:hidden grid h-11 w-11 -mr-1.5 place-items-center rounded-full text-foreground hover:bg-surface-2 transition-colors"
-            aria-label="Menu"
+            className="md:hidden grid h-11 w-11 -me-1.5 place-items-center rounded-full text-foreground hover:bg-surface-2 transition-colors"
+            aria-label={t.menu}
             aria-expanded={open}
             onClick={() => setOpen((o) => !o)}
           >
@@ -225,7 +198,7 @@ export function Nav() {
               <div className="flex items-center justify-between min-h-[44px] px-3">
                 <span className="text-muted">{tUserName(me.name, lang)}</span>
                 <span className="tnum text-accent">
-                  ¥<NumberTicker value={me.cashBalance} />
+                  $<NumberTicker value={me.cashBalance} />
                 </span>
               </div>
               <button
@@ -233,7 +206,7 @@ export function Nav() {
                   setOpen(false);
                   logout();
                 }}
-                className="flex items-center min-h-[44px] w-full px-3 text-left text-down"
+                className="flex items-center min-h-[44px] w-full px-3 text-start text-down"
               >
                 {t.logout}
               </button>

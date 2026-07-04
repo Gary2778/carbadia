@@ -14,11 +14,11 @@ export function fail(message: string, status = 400) {
 
 /** 统一异常处理: 把领域错误映射为 HTTP 响应 */
 export function handle(err: unknown) {
-  if (err instanceof AuthError) return fail(err.message || "未登录", 401);
+  if (err instanceof AuthError) return fail(err.message || "Not logged in", 401);
   if (err instanceof TradingError || err instanceof OtcError) return fail(err.message, 400);
-  if (err instanceof z.ZodError) return fail(err.issues[0]?.message ?? "参数错误", 400);
+  if (err instanceof z.ZodError) return fail(err.issues[0]?.message ?? "Invalid request", 400);
   console.error("[API ERROR]", err);
-  return fail("服务器内部错误", 500);
+  return fail("Internal server error", 500);
 }
 
 export async function parseBody<T extends z.ZodTypeAny>(req: Request, schema: T): Promise<z.infer<T>> {
@@ -26,7 +26,7 @@ export async function parseBody<T extends z.ZodTypeAny>(req: Request, schema: T)
   try {
     json = await req.json();
   } catch {
-    throw new z.ZodError([{ code: "custom", message: "请求体不是合法 JSON", path: [] }]);
+    throw new z.ZodError([{ code: "custom", message: "Request body is not valid JSON", path: [] }]);
   }
   return schema.parse(json);
 }

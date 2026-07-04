@@ -1,14 +1,14 @@
 export const fmtMoney = (n: number | null | undefined) =>
   n == null
     ? "—"
-    : n.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    : n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export const fmtQty = (n: number | null | undefined) =>
-  n == null ? "—" : n.toLocaleString("zh-CN");
+  n == null ? "—" : n.toLocaleString("en-US");
 
-export const fmtTime = (iso: string | Date) => {
+export const fmtTime = (iso: string | Date, locale = "en") => {
   const d = typeof iso === "string" ? new Date(iso) : iso;
-  return d.toLocaleString("zh-CN", { hour12: false });
+  return d.toLocaleString(locale, { hour12: false });
 };
 
 /** 带 HTTP 状态码的请求错误：调用方可按状态区分处理（如 401 → 引导登录）；网络层失败无状态码，用 0 表示 */
@@ -33,9 +33,9 @@ export async function api<T = unknown>(
   } catch (e) {
     throw new ApiError((e as Error).message, 0);
   }
-  const json = await res.json().catch(() => ({ ok: false, error: "响应解析失败" }));
+  const json = await res.json().catch(() => ({ ok: false, error: "Failed to parse response" }));
   if (!res.ok || !json.ok) {
-    throw new ApiError(json.error ?? `请求失败 (${res.status})`, res.status);
+    throw new ApiError(json.error ?? `Request failed (${res.status})`, res.status);
   }
   return json.data as T;
 }

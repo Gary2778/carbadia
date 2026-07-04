@@ -7,37 +7,8 @@ import { api } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 import { Input } from "../login/page";
 
-const DICT = {
-  en: {
-    title: "Sign up",
-    subtitle: "Sign up and get ¥100,000 demo funds",
-    nameLabel: "Name",
-    namePlaceholder: "Your name",
-    emailLabel: "Email",
-    passwordLabel: "Password",
-    passwordPlaceholder: "At least 6 characters",
-    submitting: "Signing up…",
-    submit: "Sign up",
-    haveAccount: "Already have an account?",
-    login: "Log in",
-  },
-  zh: {
-    title: "注册",
-    subtitle: "注册即赠送 ¥100,000 演示资金",
-    nameLabel: "昵称",
-    namePlaceholder: "你的名字",
-    emailLabel: "邮箱",
-    passwordLabel: "密码",
-    passwordPlaceholder: "至少 6 位",
-    submitting: "注册中…",
-    submit: "注册",
-    haveAccount: "已有账号？",
-    login: "登录",
-  },
-};
-
 export default function RegisterPage() {
-  const t = useT(DICT);
+  const t = useT("register");
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");

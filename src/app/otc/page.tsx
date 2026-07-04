@@ -10,71 +10,6 @@ import { ComplianceNote } from "@/components/ComplianceNote";
 import { useT, useLang } from "@/lib/i18n";
 import { tName, tUserName } from "@/lib/data-i18n";
 
-const DICT = {
-  en: {
-    title: "OTC Listings",
-    subtitle: "Over-the-counter block carbon-credit trades — sellers list, buyers fill directly",
-    collapse: "Collapse",
-    newListing: "+ New listing",
-    loading: "Loading…",
-    emptyPre: "No listings",
-    emptyMid: ", ",
-    emptyLogin: "log in",
-    emptyPost: " to publish",
-    thInstrument: "Instrument",
-    thSeller: "Seller",
-    thUnitPrice: "Unit price",
-    thAvailable: "Available (t)",
-    thMinBuy: "Min buy",
-    thAction: "Action",
-    loginToBuy: "Log in to buy",
-    createTitle: "New OTC Listing",
-    createHint: "Listing will lock your available holdings of the selected instrument.",
-    fieldInstrument: "Instrument",
-    fieldQuantity: "Quantity (t)",
-    fieldUnitPrice: "Unit price (¥/t)",
-    fieldMinBuy: "Min buy (t)",
-    submitting: "Submitting…",
-    confirmPublish: "Confirm",
-    listingPublished: "Listing published",
-    buy: "Buy",
-    confirm: "Confirm",
-    bought: (qty: string) => `Bought ${qty} t`,
-    cancelListing: "Cancel listing",
-  },
-  zh: {
-    title: "OTC 挂牌",
-    subtitle: "场外大宗碳信用交易 — 卖方挂牌，买方直接成交",
-    collapse: "收起",
-    newListing: "+ 发布挂牌",
-    loading: "加载中…",
-    emptyPre: "暂无挂牌",
-    emptyMid: "，",
-    emptyLogin: "登录",
-    emptyPost: "后可发布",
-    thInstrument: "标的",
-    thSeller: "卖方",
-    thUnitPrice: "单价",
-    thAvailable: "可售(吨)",
-    thMinBuy: "最小购买",
-    thAction: "操作",
-    loginToBuy: "登录购买",
-    createTitle: "发布 OTC 挂牌",
-    createHint: "挂牌将冻结你对应标的的可用持仓。",
-    fieldInstrument: "标的",
-    fieldQuantity: "数量(吨)",
-    fieldUnitPrice: "单价(元/吨)",
-    fieldMinBuy: "最小购买(吨)",
-    submitting: "提交中…",
-    confirmPublish: "确认发布",
-    listingPublished: "挂牌已发布",
-    buy: "购买",
-    confirm: "确认",
-    bought: (qty: string) => `已购买 ${qty} 吨`,
-    cancelListing: "撤销挂牌",
-  },
-};
-
 type Listing = {
   id: string;
   quantity: number;
@@ -89,7 +24,7 @@ type Asset = { id: string; symbol: string; name: string };
 type Me = { id: string } | null;
 
 export default function OtcPage() {
-  const t = useT(DICT);
+  const t = useT("otc");
   const { lang } = useLang();
   const [listings, setListings] = useState<Listing[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -153,12 +88,12 @@ export default function OtcPage() {
               <table className="w-full text-sm">
                 <thead className="text-muted text-xs">
                   <tr className="border-b border-border">
-                    <th className="text-left px-5 py-3 font-medium">{t.thInstrument}</th>
-                    <th className="text-left px-3 py-3 font-medium hidden md:table-cell">{t.thSeller}</th>
-                    <th className="text-right px-3 py-3 font-medium">{t.thUnitPrice}</th>
-                    <th className="text-right px-3 py-3 font-medium">{t.thAvailable}</th>
-                    <th className="text-right px-3 py-3 font-medium hidden sm:table-cell">{t.thMinBuy}</th>
-                    <th className="text-right px-5 py-3 font-medium">{t.thAction}</th>
+                    <th className="text-start px-5 py-3 font-medium">{t.thInstrument}</th>
+                    <th className="text-start px-3 py-3 font-medium hidden md:table-cell">{t.thSeller}</th>
+                    <th className="text-end px-3 py-3 font-medium">{t.thUnitPrice}</th>
+                    <th className="text-end px-3 py-3 font-medium">{t.thAvailable}</th>
+                    <th className="text-end px-3 py-3 font-medium hidden sm:table-cell">{t.thMinBuy}</th>
+                    <th className="text-end px-5 py-3 font-medium">{t.thAction}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -169,10 +104,10 @@ export default function OtcPage() {
                         <div className="text-xs text-muted truncate max-w-[180px]">{tName(l.asset.symbol, l.asset.name, lang)}</div>
                       </td>
                       <td className="px-3 py-3 text-muted hidden md:table-cell">{tUserName(l.seller.name, lang)}</td>
-                      <td className="px-3 py-3 text-right tnum text-accent">¥{fmtMoney(l.pricePerUnit)}</td>
-                      <td className="px-3 py-3 text-right tnum">{fmtQty(l.quantity)}</td>
-                      <td className="px-3 py-3 text-right tnum text-muted hidden sm:table-cell">{fmtQty(l.minQuantity)}</td>
-                      <td className="px-5 py-3 text-right">
+                      <td className="px-3 py-3 text-end tnum text-accent">${fmtMoney(l.pricePerUnit)}</td>
+                      <td className="px-3 py-3 text-end tnum">{fmtQty(l.quantity)}</td>
+                      <td className="px-3 py-3 text-end tnum text-muted hidden sm:table-cell">{fmtQty(l.minQuantity)}</td>
+                      <td className="px-5 py-3 text-end">
                         {me?.id === l.sellerId ? (
                           <CancelListing id={l.id} onDone={load} />
                         ) : me ? (
@@ -194,7 +129,7 @@ export default function OtcPage() {
 }
 
 function CreateListing({ assets, onDone }: { assets: Asset[]; onDone: () => void }) {
-  const t = useT(DICT);
+  const t = useT("otc");
   const toast = useToast();
   const [assetId, setAssetId] = useState(assets[0]?.id ?? "");
   const [quantity, setQuantity] = useState("");
@@ -260,7 +195,7 @@ function Field({ label, value, onChange, step }: { label: string; value: string;
 }
 
 function BuyListing({ listing, onDone }: { listing: Listing; onDone: () => void }) {
-  const t = useT(DICT);
+  const t = useT("otc");
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [qty, setQty] = useState(String(listing.minQuantity));
@@ -295,7 +230,7 @@ function BuyListing({ listing, onDone }: { listing: Listing; onDone: () => void 
 }
 
 function CancelListing({ id, onDone }: { id: string; onDone: () => void }) {
-  const t = useT(DICT);
+  const t = useT("otc");
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   return (

@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
 import { useRatingTransition, type Pt } from "./PixelTransition";
 import { useLang, useT } from "@/lib/i18n";
+import { isCJK } from "@/i18n/config";
 import { useTheme } from "@/lib/theme";
 import { useLowPower } from "@/lib/useLowPower";
 
@@ -56,10 +57,7 @@ export function PixelMorphEntry() {
   const cBorderHover = dark ? "hover:border-[#9b6dff]/50" : "hover:border-accent/40";
   const cKicker = dark ? "text-[#b794ff]/80" : "text-accent/80";
   const cAccent = dark ? "text-[#b794ff]" : "text-accent";
-  const tx = useT({
-    en: { kicker: "CCRC · CARBADIA EXCLUSIVE", rest: "Carbon Rating", cta: "Hover to wake · click to enter", ctaReduced: "Enter rating service", aria: "CCRC · Carbon Credit Rating Connoisseur" },
-    zh: { kicker: "CCRC · CARBADIA 独家评级", rest: "碳信用评级", cta: "悬停唤醒 · 点击进入", ctaReduced: "进入评级服务", aria: "CCRC · 碳信用评级鉴赏家" },
-  });
+  const tx = useT("pixelEntry");
   const { enter } = useRatingTransition();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const raf = useRef(0);
@@ -77,7 +75,8 @@ export function PixelMorphEntry() {
     const ctx = cvs.getContext("2d");
     if (!ctx) return;
     const s = st.current;
-    const restText = lang === "zh" ? "碳信用评级" : "Carbon Rating";
+    const restText = tx.rest;
+    const cjk = isCJK(lang);
     const colBase = cBase(dark);
     const colGlow = cGlow(dark);
     let last = 0; // delta-time:高刷新率屏幕不变快
@@ -94,7 +93,7 @@ export function PixelMorphEntry() {
       s.H = H;
       const avail = W * 0.94;
       // 静止文字（平滑矢量字）：按宽度自适应字号
-      let restFS = lang === "zh" ? Math.min(88, W / (restText.length + 0.8)) : Math.min(66, W / (restText.length * 0.55));
+      let restFS = cjk ? Math.min(88, W / (restText.length + 0.8)) : Math.min(66, W / (restText.length * 0.55));
       let Z = sample(restText, restFS);
       if (Z.tw > avail) {
         restFS = Math.max(28, restFS * (avail / Z.tw));
@@ -214,7 +213,7 @@ export function PixelMorphEntry() {
       window.removeEventListener("resize", rebuild);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [reduced, low, lang, dark]);
+  }, [reduced, low, lang, tx.rest, dark]);
 
   function onClick(e: React.MouseEvent) {
     if (reduced) return; // 让 <Link> 正常跳转

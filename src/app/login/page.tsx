@@ -6,33 +6,8 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/format";
 import { useT } from "@/lib/i18n";
 
-const DICT = {
-  en: {
-    title: "Log in",
-    subtitle: "Log in to start trading carbon credits",
-    email: "Email",
-    password: "Password",
-    loggingIn: "Logging in…",
-    login: "Log in",
-    noAccount: "Don't have an account?",
-    signUp: "Sign up",
-    demoAccount: "Demo accounts",
-  },
-  zh: {
-    title: "登录",
-    subtitle: "登录后开始交易碳信用",
-    email: "邮箱",
-    password: "密码",
-    loggingIn: "登录中…",
-    login: "登录",
-    noAccount: "还没有账号？",
-    signUp: "注册",
-    demoAccount: "演示账号",
-  },
-};
-
 export default function LoginPage() {
-  const t = useT(DICT);
+  const t = useT("login");
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -247,7 +247,7 @@ describe("撮合引擎 — 资金守恒不变量", () => {
     const buy = await matching.placeOrder({
       userId: charlie.id, assetId: asset.id, side: "BUY", type: "MARKET", quantity: 10,
     });
-    // 275 元按 50 元/吨只买得起 5 吨,剩余委托量随市价单一并撤销
+    // $275 按 $50/吨只买得起 5 吨,剩余委托量随市价单一并撤销
     expect(buy.filledQty).toBe(5);
     expect(buy.order.status).toBe("CANCELLED");
     await expectInvariants();

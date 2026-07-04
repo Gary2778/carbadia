@@ -4,23 +4,23 @@ import { createSession, hashPassword } from "@/lib/auth";
 import { ok, fail, handle, parseBody } from "@/lib/api";
 
 const schema = z.object({
-  email: z.string().email("邮箱格式不正确"),
-  name: z.string().min(1, "请填写昵称").max(40),
-  password: z.string().min(6, "密码至少 6 位"),
+  email: z.string().email("Invalid email address"),
+  name: z.string().min(1, "Name is required").max(40),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export async function POST(req: Request) {
   try {
     const { email, name, password } = await parseBody(req, schema);
     const exists = await prisma.user.findUnique({ where: { email } });
-    if (exists) return fail("该邮箱已注册", 409);
+    if (exists) return fail("This email is already registered", 409);
 
     const user = await prisma.user.create({
       data: {
         email,
         name,
         passwordHash: hashPassword(password),
-        cashBalance: 100000, // 新用户赠送 10 万元演示资金
+        cashBalance: 100000, // 新用户赠送 $100,000 演示资金
       },
     });
     await createSession(user.id);

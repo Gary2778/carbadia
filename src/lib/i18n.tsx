@@ -1,11 +1,18 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { DEFAULT_LANG, LANG_META, isLang, type Lang } from "@/i18n/config";
+import { MESSAGES, type Messages } from "@/i18n";
 
-export type Lang = "en" | "zh";
+export type { Lang };
 
 const STORAGE_KEY = "carbadia-lang";
-const DEFAULT_LANG: Lang = "en"; // 界面默认英文
+
+// 语言落到文档:lang 供排版/日期语义,dir 支持阿拉伯语 RTL
+function applyToDocument(l: Lang) {
+  document.documentElement.lang = LANG_META[l].htmlLang;
+  document.documentElement.dir = LANG_META[l].dir;
+}
 
 type LangCtx = { lang: Lang; setLang: (l: Lang) => void };
 const Ctx = createContext<LangCtx>({ lang: DEFAULT_LANG, setLang: () => {} });
@@ -16,10 +23,10 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
   // 挂载后读取已保存的偏好（SSR 始终按默认英文渲染，避免水合不一致）
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-    if (saved === "zh" || saved === "en") {
+    if (isLang(saved) && saved !== DEFAULT_LANG) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 水合安全模式:SSR 按默认英文渲染,挂载后才能读 localStorage 纠正
       setLangState(saved);
-      document.documentElement.lang = saved === "zh" ? "zh-CN" : "en";
+      applyToDocument(saved);
     }
   }, []);
 
@@ -30,7 +37,7 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* ignore */
     }
-    if (typeof document !== "undefined") document.documentElement.lang = l === "zh" ? "zh-CN" : "en";
+    if (typeof document !== "undefined") applyToDocument(l);
   };
 
   return <Ctx.Provider value={{ lang, setLang }}>{children}</Ctx.Provider>;
@@ -39,12 +46,15 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
 export const useLang = () => useContext(Ctx);
 
 /**
- * 组件就近携带自己的文案：
- *   const t = useT({ en: { hi: "Hi" }, zh: { hi: "你好" } });
- *   t.hi
- * 无需中央字典，便于各页独立维护与并行开发。
+ * 按命名空间取当前语言文案（中央目录见 src/i18n/messages/）：
+ *   const t = useT("portfolio");
+ *   t.holdings
+ * en.ts 是 source of truth，其余语言文件类型 = typeof en，缺 key 编译报错。
  */
-export function useT<T>(dict: { en: T; zh: T }): T {
+export function useT<K extends keyof Messages>(ns: K): Messages[K] {
   const { lang } = useLang();
-  return dict[lang];
+  return MESSAGES[lang][ns];
 }
+
+/** 当前语言的 BCP-47 代码(给 toLocaleString 等 Intl API 用) */
+export const htmlLang = (lang: Lang) => LANG_META[lang].htmlLang;

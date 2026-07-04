@@ -11,7 +11,7 @@ const DEV_SECRET = "dev-insecure-secret-change-me";
 function getSecret(): string {
   const secret = process.env.SESSION_SECRET;
   if (process.env.NODE_ENV === "production" && (!secret || secret === DEV_SECRET)) {
-    throw new Error("生产环境必须设置 SESSION_SECRET 环境变量(且不能沿用 dev 默认值)");
+    throw new Error("SESSION_SECRET must be set in production (and must not be the dev default)");
   }
   return secret ?? DEV_SECRET;
 }
@@ -78,7 +78,7 @@ export async function getCurrentUser() {
 
 export async function requireUser() {
   const user = await getCurrentUser();
-  if (!user) throw new AuthError("未登录");
+  if (!user) throw new AuthError("Not logged in");
   return user;
 }
 

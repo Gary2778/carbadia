@@ -10,115 +10,10 @@ import { NumberTicker } from "@/components/anim/NumberTicker";
 import { FlashCell } from "@/components/anim/FlashCell";
 import { useToast } from "@/components/anim/Toast";
 import { ComplianceNote } from "@/components/ComplianceNote";
-import { useT, useLang } from "@/lib/i18n";
+import { useT, useLang, htmlLang } from "@/lib/i18n";
 import { tName, tProjectType, tCountry, tRegistry } from "@/lib/data-i18n";
 import { usePolling } from "@/lib/usePolling";
 import type { Candle, IntervalKey } from "@/lib/candles";
-
-const DICT = {
-  en: {
-    loading: "Loading…",
-    refreshFailed: "Data refresh failed, retrying…",
-    lastPrice: "Last price",
-    high24h: "24h high / low / vol",
-    projectType: "Project type",
-    vintage: "Vintage",
-    region: "Region",
-    registry: "Registry",
-    candles: "Candles",
-    depth: "Depth",
-    intervals: { "1m": "1m", "5m": "5m", "1h": "1h", "1d": "1d" } as Record<IntervalKey, string>,
-    recentTrades: "Recent trades",
-    price: "Price",
-    quantity: "Quantity",
-    time: "Time",
-    noTrades: "No trades yet",
-    orderBook: "Order book",
-    noTradesYet: "No trades yet",
-    placeOrder: "Place order",
-    loginPrefix: "Please ",
-    login: "Log in",
-    loginSuffix: " to trade",
-    myOpenOrders: "My open orders",
-    position: "Position",
-    locked: "locked",
-    noOpenOrders: "No open orders",
-    side: "Side",
-    type: "Type",
-    filledTotal: "Filled/Total",
-    action: "Action",
-    buy: "Buy",
-    sell: "Sell",
-    limit: "Limit",
-    market: "Market",
-    noOrders: "No orders",
-    priceUnit: "Price (¥/t)",
-    counterPrice: "Counter price",
-    quantityUnit: "Quantity (t)",
-    available: "Available",
-    max: "Max",
-    estTotal: "Est. total",
-    submitting: "Submitting…",
-    submitted: "Submitted",
-    cancel: "Cancel",
-    cancelled: "Cancelled",
-    tonnes: "t",
-    fillToast: (qty: number, status: string) => `Filled ${qty} t, order ${status}`,
-    openToast: (status: string) => `Order placed (${status})`,
-    status: { OPEN: "Open", PARTIAL: "Partial", FILLED: "Filled", CANCELLED: "Cancelled" } as Record<string, string>,
-  },
-  zh: {
-    loading: "加载中…",
-    refreshFailed: "数据刷新失败，正在重试…",
-    lastPrice: "最新成交价",
-    high24h: "24h 高 / 低 / 量",
-    projectType: "项目类型",
-    vintage: "签发年份",
-    region: "地区",
-    registry: "登记簿",
-    candles: "K线",
-    depth: "深度",
-    intervals: { "1m": "1分", "5m": "5分", "1h": "1时", "1d": "1日" } as Record<IntervalKey, string>,
-    recentTrades: "最近成交",
-    price: "价格",
-    quantity: "数量",
-    time: "时间",
-    noTrades: "暂无成交",
-    orderBook: "订单簿",
-    noTradesYet: "暂无成交",
-    placeOrder: "下单",
-    loginPrefix: "请先",
-    login: "登录",
-    loginSuffix: "后交易",
-    myOpenOrders: "我的当前委托",
-    position: "持仓",
-    locked: "冻结",
-    noOpenOrders: "无未完成委托",
-    side: "方向",
-    type: "类型",
-    filledTotal: "已成交/总量",
-    action: "操作",
-    buy: "买入",
-    sell: "卖出",
-    limit: "限价",
-    market: "市价",
-    noOrders: "无挂单",
-    priceUnit: "价格 (元/吨)",
-    counterPrice: "对手价",
-    quantityUnit: "数量 (吨)",
-    available: "可用",
-    max: "全部",
-    estTotal: "预估金额",
-    submitting: "提交中…",
-    submitted: "已提交",
-    cancel: "撤单",
-    cancelled: "已撤单",
-    tonnes: "吨",
-    fillToast: (qty: number, status: string) => `成交 ${qty} 吨，订单${status}`,
-    openToast: (status: string) => `已挂单（${status}）`,
-    status: { OPEN: "挂单中", PARTIAL: "部分成交", FILLED: "全部成交", CANCELLED: "已撤销" } as Record<string, string>,
-  },
-};
 
 type Level = { price: number; quantity: number };
 type MarketData = {
@@ -141,7 +36,7 @@ const INTERVAL_TABS: { key: IntervalKey }[] = [
 ];
 
 export default function MarketPage({ params }: { params: Promise<{ symbol: string }> }) {
-  const t = useT(DICT);
+  const t = useT("market");
   const { lang } = useLang();
   const { symbol } = use(params);
   const [data, setData] = useState<MarketData | null>(null);
@@ -205,7 +100,7 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
           <div className="flex items-baseline gap-2">
             <FlashCell value={asset.lastPrice} className="inline-block px-1 -mx-1">
               <span className="tnum text-2xl font-semibold text-accent">
-                {asset.lastPrice == null ? "—" : <>¥<NumberTicker value={asset.lastPrice} /></>}
+                {asset.lastPrice == null ? "—" : <>$<NumberTicker value={asset.lastPrice} /></>}
               </span>
             </FlashCell>
             {stats.change24h != null && (
@@ -257,7 +152,7 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
                 </button>
               ))}
               {tab === "candles" && (
-                <div className="ml-auto flex gap-1">
+                <div className="ms-auto flex gap-1">
                   {INTERVAL_TABS.map((it) => (
                     <button
                       key={it.key}
@@ -285,7 +180,7 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
             <div className="px-4 py-2.5 border-b border-border font-semibold text-sm">{t.recentTrades}</div>
             <div className="p-2">
               <div className="grid grid-cols-3 text-xs text-muted px-2 pb-1">
-                <span>{t.price}</span><span className="text-right">{t.quantity}</span><span className="text-right">{t.time}</span>
+                <span>{t.price}</span><span className="text-end">{t.quantity}</span><span className="text-end">{t.time}</span>
               </div>
               <div className="max-h-[280px] overflow-y-auto">
                 {trades.length === 0 ? (
@@ -300,9 +195,9 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
                       transition={{ duration: 0.3 }}
                     >
                       <span className="text-accent">{fmtMoney(tr.price)}</span>
-                      <span className="text-right">{fmtQty(tr.quantity)}</span>
-                      <span className="text-right text-muted">
-                        {new Date(tr.createdAt).toLocaleTimeString("zh-CN", { hour12: false })}
+                      <span className="text-end">{fmtQty(tr.quantity)}</span>
+                      <span className="text-end text-muted">
+                        {new Date(tr.createdAt).toLocaleTimeString(htmlLang(lang), { hour12: false })}
                       </span>
                     </motion.div>
                   ))
@@ -320,7 +215,7 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
               <DepthSide levels={book.asks} side="ask" max={maxDepth} reverse />
               <div className="py-2 px-2 my-1 border-y border-border tnum text-center text-lg font-semibold">
                 <FlashCell value={asset.lastPrice} className="inline-block px-2 -mx-2">
-                  {asset.lastPrice == null ? <span className="text-muted text-sm">{t.noTradesYet}</span> : `¥${fmtMoney(asset.lastPrice)}`}
+                  {asset.lastPrice == null ? <span className="text-muted text-sm">{t.noTradesYet}</span> : `$${fmtMoney(asset.lastPrice)}`}
                 </FlashCell>
               </div>
               <DepthSide levels={book.bids} side="bid" max={maxDepth} />
@@ -361,11 +256,11 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
             <table className="w-full text-sm">
               <thead className="text-muted text-xs">
                 <tr className="border-b border-border">
-                  <th className="text-left px-4 py-2 font-medium">{t.side}</th>
-                  <th className="text-left px-3 py-2 font-medium">{t.type}</th>
-                  <th className="text-right px-3 py-2 font-medium">{t.price}</th>
-                  <th className="text-right px-3 py-2 font-medium">{t.filledTotal}</th>
-                  <th className="text-right px-4 py-2 font-medium">{t.action}</th>
+                  <th className="text-start px-4 py-2 font-medium">{t.side}</th>
+                  <th className="text-start px-3 py-2 font-medium">{t.type}</th>
+                  <th className="text-end px-3 py-2 font-medium">{t.price}</th>
+                  <th className="text-end px-3 py-2 font-medium">{t.filledTotal}</th>
+                  <th className="text-end px-4 py-2 font-medium">{t.action}</th>
                 </tr>
               </thead>
               <tbody>
@@ -375,9 +270,9 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
                       {o.side === "BUY" ? t.buy : t.sell}
                     </td>
                     <td className="px-3 py-2 text-muted">{o.type === "LIMIT" ? t.limit : t.market}</td>
-                    <td className="px-3 py-2 text-right tnum">{o.price == null ? t.market : fmtMoney(o.price)}</td>
-                    <td className="px-3 py-2 text-right tnum">{fmtQty(o.filledQuantity)} / {fmtQty(o.quantity)}</td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-3 py-2 text-end tnum">{o.price == null ? t.market : fmtMoney(o.price)}</td>
+                    <td className="px-3 py-2 text-end tnum">{fmtQty(o.filledQuantity)} / {fmtQty(o.quantity)}</td>
+                    <td className="px-4 py-2 text-end">
                       <CancelOrderBtn id={o.id} onDone={load} />
                     </td>
                   </tr>
@@ -392,7 +287,7 @@ export default function MarketPage({ params }: { params: Promise<{ symbol: strin
 }
 
 function DepthSide({ levels, side, max, reverse }: { levels: Level[]; side: "bid" | "ask"; max: number; reverse?: boolean }) {
-  const t = useT(DICT);
+  const t = useT("market");
   const rows = reverse ? [...levels].reverse() : levels;
   const color = side === "bid" ? "text-up" : "text-down";
   const bar = side === "bid" ? "bg-up/10" : "bg-down/10";
@@ -408,12 +303,12 @@ function DepthSide({ levels, side, max, reverse }: { levels: Level[]; side: "bid
           transition={{ duration: 0.25 }}
         >
           <motion.div
-            className={`absolute inset-y-0 right-0 ${bar}`}
+            className={`absolute inset-y-0 end-0 ${bar}`}
             animate={{ width: `${(l.quantity / max) * 100}%` }}
             transition={{ type: "spring", stiffness: 120, damping: 22 }}
           />
           <span className={`relative ${color}`}>{fmtMoney(l.price)}</span>
-          <span className="relative text-right">{fmtQty(l.quantity)}</span>
+          <span className="relative text-end">{fmtQty(l.quantity)}</span>
         </motion.div>
       ))}
     </div>
@@ -429,7 +324,7 @@ function OrderForm({
   holding: { quantity: number; locked: number } | null;
   onDone: () => void;
 }) {
-  const t = useT(DICT);
+  const t = useT("market");
   const toast = useToast();
   const [side, setSide] = useState<"BUY" | "SELL">("BUY");
   const [type, setType] = useState<"LIMIT" | "MARKET">("LIMIT");
@@ -530,7 +425,7 @@ function OrderForm({
       {estTotal != null && (
         <div className="text-xs text-muted flex justify-between">
           <span>{t.estTotal}</span>
-          <span className="tnum text-foreground">¥{fmtMoney(estTotal)}</span>
+          <span className="tnum text-foreground">${fmtMoney(estTotal)}</span>
         </div>
       )}
 
@@ -551,7 +446,7 @@ function OrderForm({
 }
 
 function CancelOrderBtn({ id, onDone }: { id: string; onDone: () => void }) {
-  const t = useT(DICT);
+  const t = useT("market");
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   return (

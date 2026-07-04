@@ -67,6 +67,12 @@ h3 {
   letter-spacing: 0;
 }
 
+/* RTL(阿拉伯语)下数字/价格保持 LTR 书写序,避免 "$" 与符号被 bidi 算法重排 */
+[dir="rtl"] .tnum {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 /* ── Dark 模式（默认）：Peppa 星空夜色 ───────────────────────────── */
 html[data-theme="dark"] {
   color-scheme: dark;

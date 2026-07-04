@@ -9,7 +9,7 @@ const schema = z.object({
   side: z.enum(["BUY", "SELL"]),
   type: z.enum(["LIMIT", "MARKET"]),
   price: z.number().positive().nullable().optional(),
-  quantity: z.number().int().positive("数量必须为正整数"),
+  quantity: z.number().int().positive("Quantity must be a positive integer"),
 });
 
 export async function POST(req: Request) {

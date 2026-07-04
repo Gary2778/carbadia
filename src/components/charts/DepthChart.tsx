@@ -12,29 +12,8 @@ const W = 760;
 const H = 300;
 const PAD = 16;
 
-const DICT = {
-  en: {
-    noOrders: "No orders",
-    price: "Price",
-    size: "Size",
-    cumulative: "Cumulative",
-    tonnes: "t",
-    spread: "Spread",
-    depth: "Order-book depth",
-  },
-  zh: {
-    noOrders: "暂无挂单",
-    price: "价",
-    size: "档量",
-    cumulative: "累计",
-    tonnes: "吨",
-    spread: "价差",
-    depth: "买卖盘深度",
-  },
-};
-
 export function DepthChart({ bids, asks }: { bids: Level[]; asks: Level[] }) {
-  const t = useT(DICT);
+  const t = useT("depthChart");
   const reduced = useReducedMotion();
   const [hover, setHover] = useState<CumLevel | null>(null);
 
@@ -102,7 +81,8 @@ export function DepthChart({ bids, asks }: { bids: Level[]; asks: Level[] }) {
   const spread = asks[0] && bids[0] ? asks[0].price - bids[0].price : null;
 
   return (
-    <div className="relative">
+    // 图表坐标系恒为 LTR(价格轴从左到右),RTL 界面下也不翻转
+    <div className="relative" dir="ltr">
       <div className="absolute top-0 left-2 z-10 text-[11px] tnum text-muted flex gap-3 bg-surface/80 backdrop-blur px-2 py-0.5 rounded">
         {hover ? (
           <>

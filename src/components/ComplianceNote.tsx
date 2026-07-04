@@ -7,9 +7,6 @@ import { useT } from "@/lib/i18n";
  * 完整合规声明在页脚 Footer。
  */
 export function ComplianceNote({ className = "" }: { className?: string }) {
-  const t = useT({
-    en: { text: "Demo only — simulated orders involve no real funds or carbon assets, and are not investment advice." },
-    zh: { text: "仅为模拟演示 — 下单不涉及任何真实资金或碳资产,且不构成投资建议。" },
-  });
+  const t = useT("compliance");
   return <p className={`text-[11px] leading-relaxed text-muted ${className}`}>{t.text}</p>;
 }

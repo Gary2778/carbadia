@@ -61,8 +61,9 @@ export function RansomText({ text, className }: { text: string; className?: stri
   if (theme !== "dark") return <span className={className}>{text}</span>;
   return (
     <span className={className} aria-label={text}>
-      {[...text].map((ch, i) =>
-        ch === " " ? (
+      {/* 阿拉伯文字母连写:逐字符拆成独立 span 会破坏字形,按词拆分 */}
+      {(/[؀-ۿ]/.test(text) ? text.split(/(\s+)/).filter(Boolean) : [...text]).map((ch, i) =>
+        /^\s+$/.test(ch) ? (
           <span key={i}>{" "}</span>
         ) : (
           <span key={i} aria-hidden className="ransom-letter" style={ransomStyle(text, i)}>

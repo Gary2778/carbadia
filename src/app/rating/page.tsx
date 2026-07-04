@@ -21,8 +21,8 @@ const GRADES: [string, string][] = [
 // 维度顺序固定，文案随语言取自 DICT.dims
 const DIM_KEYS = ["additionality", "permanence", "doubleCounting", "coBenefits"] as const;
 
-// 项目元数据（代码/评级/颜色为数据，名称/类型随语言取自 DICT）
-const PROJECTS: { symbol: string; type: string; grade: string; color: string }[] = [
+// 项目元数据（代码/评级/颜色为数据，名称/类型随语言取自中央目录 data 命名空间）
+const PROJECTS: { symbol: string; type: "blueCarbon" | "forestry" | "renewable" | "methane" | "efficiency"; grade: string; color: string }[] = [
   { symbol: "GS-MANG-2022", type: "blueCarbon", grade: "AA", color: "#0a8a52" },
   { symbol: "VCS-FOR-2021", type: "forestry", grade: "A", color: "#0fae66" },
   { symbol: "CCER-SOL-2023", type: "renewable", grade: "BBB", color: "#5cb85c" },
@@ -31,108 +31,11 @@ const PROJECTS: { symbol: string; type: string; grade: string; color: string }[]
   { symbol: "VCS-COOK-2020", type: "efficiency", grade: "B", color: "#e08e1b" },
 ];
 
-const DICT = {
-  en: {
-    eyebrow: "CCRC · CARBON CREDIT RATING CONNOISSEUR",
-    title: "Carbon Credit Rating Connoisseur",
-    lead:
-      "Exclusive to Carbadia — an independent, transparent assessment of the real emission-reduction quality of every carbon credit. Eight grades, from AAA to D, so you can read a project's quality at a glance.",
-    disclaimer: "Sample ratings · For demonstration only, not investment advice",
-    ladderTitle: "Rating ladder",
-    ladderSub: "From investment grade (deep green) to high risk (red) — eight grades in all.",
-    dimsTitle: "The four dimensions we assess",
-    dims: {
-      additionality: {
-        title: "Additionality",
-        desc: "Would the emission reduction have happened anyway without this carbon-credit revenue? The less likely, the higher the quality.",
-      },
-      permanence: {
-        title: "Permanence",
-        desc: "How great is the risk that sequestered carbon is re-released (e.g. forest fire, deforestation)?",
-      },
-      doubleCounting: {
-        title: "Double-counting",
-        desc: "Is the same tonne of reduction claimed more than once across registries or by multiple parties?",
-      },
-      coBenefits: {
-        title: "Co-benefits",
-        desc: "The project's additional positive impact on biodiversity, jobs and local communities.",
-      },
-    },
-    projectsTitle: "Rated projects (sample)",
-    instrumentsCount: (n: number) => `${n} instruments`,
-    names: {
-      "GS-MANG-2022": "Indonesia Mangrove Blue Carbon Restoration",
-      "VCS-FOR-2021": "Yunnan Forest Management Carbon Sink",
-      "CCER-SOL-2023": "Qinghai Solar PV",
-      "GS-WIND-2022": "Rajasthan Wind (India)",
-      "CDM-METH-2019": "Brazil Landfill Gas Capture",
-      "VCS-COOK-2020": "Kenya Efficient Cookstoves",
-    } as Record<string, string>,
-    types: {
-      blueCarbon: "Blue carbon",
-      forestry: "Forestry sink",
-      renewable: "Renewable energy",
-      methane: "Methane capture",
-      efficiency: "Efficiency",
-    } as Record<string, string>,
-    ctaTitle: "Bring ratings into your trading decisions",
-    ctaSub: "Use ratings to pick high-quality carbon credits in the order book and OTC market.",
-    ctaLink: "Go to the exchange →",
-  },
-  zh: {
-    eyebrow: "CCRC · 碳信用评级鉴赏家",
-    title: "碳信用评级鉴赏家",
-    lead:
-      "Carbadia 独家——独立、透明地评估每一笔碳信用的真实减排质量。八档信用评级，从 AAA 到 D，一眼看懂项目成色。",
-    disclaimer: "示例评级 · 仅供演示，不构成投资建议",
-    ladderTitle: "评级阶梯",
-    ladderSub: "从投资级（深绿）到高风险（红），共八档。",
-    dimsTitle: "我们评估的四个维度",
-    dims: {
-      additionality: {
-        title: "额外性 Additionality",
-        desc: "没有这笔碳信用收入，减排是否本就会发生？越不可能，质量越高。",
-      },
-      permanence: {
-        title: "永久性 Permanence",
-        desc: "已封存的碳被重新释放（如森林火灾、毁林）的风险有多大？",
-      },
-      doubleCounting: {
-        title: "重复计算 Double-counting",
-        desc: "同一吨减排是否被多个登记簿或多方重复主张？",
-      },
-      coBenefits: {
-        title: "协同效益 Co-benefits",
-        desc: "项目对生物多样性、就业与当地社区的额外正向影响。",
-      },
-    },
-    projectsTitle: "已评级项目（示例）",
-    instrumentsCount: (n: number) => `${n} 个标的`,
-    names: {
-      "GS-MANG-2022": "印尼红树林蓝碳修复",
-      "VCS-FOR-2021": "云南森林经营碳汇项目",
-      "CCER-SOL-2023": "青海光伏发电项目",
-      "GS-WIND-2022": "印度拉贾斯坦风电项目",
-      "CDM-METH-2019": "巴西垃圾填埋气回收",
-      "VCS-COOK-2020": "肯尼亚高效炉灶项目",
-    } as Record<string, string>,
-    types: {
-      blueCarbon: "蓝碳",
-      forestry: "林业碳汇",
-      renewable: "可再生能源",
-      methane: "甲烷回收",
-      efficiency: "能效",
-    } as Record<string, string>,
-    ctaTitle: "把评级带进交易决策",
-    ctaSub: "在订单簿和 OTC 市场里，结合评级挑选高质量碳信用。",
-    ctaLink: "前往交易所 →",
-  },
-};
-
 export default function RatingPage() {
   useRatingReveal();
-  const t = useT(DICT);
+  const t = useT("rating");
+  // 项目名/类型与行情页共用数据层文案,避免两处维护
+  const d = useT("data");
   const dark = useTheme().theme === "dark";
 
   return (
@@ -190,10 +93,10 @@ export default function RatingPage() {
                 className="flex items-center gap-3 px-5 py-3.5 border-b border-border/50 last:border-b-0 hover:bg-surface-2 transition-colors"
               >
                 <div className="min-w-0">
-                  <div className="font-medium text-sm truncate">{t.names[p.symbol] ?? p.symbol}</div>
-                  <div className="text-muted text-xs">{p.symbol} · {t.types[p.type] ?? p.type}</div>
+                  <div className="font-medium text-sm truncate">{d.assetNames[p.symbol] ?? p.symbol}</div>
+                  <div className="text-muted text-xs">{p.symbol} · {d.projectTypes[p.type]}</div>
                 </div>
-                <span className="ml-auto font-mono font-bold text-white rounded-lg px-3 py-1 text-sm shrink-0" style={{ background: p.color }}>
+                <span className="ms-auto font-mono font-bold text-white rounded-lg px-3 py-1 text-sm shrink-0" style={{ background: p.color }}>
                   {p.grade}
                 </span>
               </Link>
