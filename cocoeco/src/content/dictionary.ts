@@ -60,7 +60,7 @@ export type Dict = {
   ui: {
     brand: string; topCta: string; journeyMenu: string; language: string;
     soundOn: string; soundOff: string; readingMode: string; backToImmersive: string;
-    hintScroll: string; hintDrag: string; cardClose: string;
+    hintScroll: string; hintTrace: string; cardClose: string;
     loading: string; loadFailed: string; retry: string; enterReading: string;
     liteMode: string; reducedMotion: string; progressAria: string;
   };
@@ -81,7 +81,7 @@ const zh: Dict = {
     readingMode: "阅读模式(纯文字读完我的故事)",
     backToImmersive: "回到 3D 旅程",
     hintScroll: "跟我来",
-    hintDrag: "试试拖动我",
+    hintTrace: "你看不见我。但灯上方那缕微光,是我刚路过的地方——点它",
     cardClose: "知道了",
     loading: "三亿年都等了,不差这几秒",
     loadFailed: "这一段风景没能加载出来。你可以重试,或切换到阅读模式继续。",
@@ -98,7 +98,7 @@ const zh: Dict = {
       "我叫可可,一颗比太阳还老的碳原子。三个小时前,有人把我从煤里叫醒。陪我走完这段路——直到我",
       "。cocoeco:让每一吨碳都有人认领。",
     ],
-    ogImageAlt: "深夜卧室的窗外,一颗发光的碳分子悬在城市上空",
+    ogImageAlt: "深夜卧室,一缕微光从台灯升起,飘向半开的窗",
   },
 
   common: {

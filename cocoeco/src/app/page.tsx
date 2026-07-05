@@ -27,7 +27,7 @@ export default function Home() {
           <CopyBlock key={b.lines[0]} heading={b.heading} lines={b.lines} />
         ))}
         <div className="flex flex-wrap gap-3">
-          <HintTag text={ui.hintDrag} />
+          <HintTag text={ui.hintTrace} />
           <HintTag text={ui.hintScroll} />
         </div>
       </SceneSection>
