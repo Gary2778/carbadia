@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* M0 定稿:午夜账本 × 黎明光谱。基调 token 为"午夜账本";
+   每幕背景沿夜→黎明光谱推进,由 SCENE_THEME(scenes/registry)驱动。 */
+:root {
+  --bg: #0b0f1a;
+  --bg-soft: #121829;
+  --fg: #ece8dd;
+  --muted: #8f96a8;
+  --accent: #7ad0a6;
+  --gold: #f5c97b;
+  --card: #161d31;
+  --card-border: #232c45;
+
+  --font-serif: "Noto Serif SC", "Songti SC", "SimSun", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 旁白/大字用衬线,数字用等宽(账本美学) */
+.voice {
+  font-family: var(--font-serif);
+}
+
+.ledger-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

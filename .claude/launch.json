@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3939
+    },
+    {
+      "name": "cocoeco",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "cocoeco", "run", "dev"],
+      "port": 3100
     }
   ]
 }
