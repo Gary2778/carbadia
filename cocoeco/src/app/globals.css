@@ -38,6 +38,16 @@ body {
   font-family: var(--font-serif);
 }
 
+/* 黎明段浅色背景上的深色墨水(SCENE_THEME.ink === "dark") */
+.scene-ink-dark {
+  --fg: #2c2417;
+  --muted: #6b5c40;
+  --card: rgba(255, 255, 255, 0.55);
+  --card-border: rgba(44, 36, 23, 0.25);
+  --accent: #1d6b4a;
+  color: var(--fg);
+}
+
 .ledger-num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
