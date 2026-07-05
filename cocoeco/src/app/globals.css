@@ -33,6 +33,11 @@ body {
   font-family: ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
+/* 固定头部(导航 52px + 进度条 16px)不遮挡锚点跳转目标 */
+section[id] {
+  scroll-margin-top: 68px;
+}
+
 /* 旁白/大字用衬线,数字用等宽(账本美学) */
 .voice {
   font-family: var(--font-serif);

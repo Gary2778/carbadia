@@ -7,6 +7,8 @@ import { BigLines, CopyBlock, CreedLines, HintTag, Principles } from "@/componen
 import { CtaLink } from "@/components/CtaLink";
 import { RatingStamp } from "@/components/RatingStamp";
 import { Footer } from "@/components/Footer";
+import { TopNav } from "@/components/TopNav";
+import { ProgressBar } from "@/components/ProgressBar";
 import { parseEmphasis } from "@/components/emphasis";
 
 export default function Home() {
@@ -15,6 +17,8 @@ export default function Home() {
 
   return (
     <main>
+      <TopNav />
+      <ProgressBar />
       {/* 第 0 幕 · 序幕 */}
       <SceneSection id="prologue" seoTitle={scenes.prologue.seoTitle} narration={scenes.prologue.narration} heroHeading>
         <BigLines lines={scenes.prologue.bigLines!} />
