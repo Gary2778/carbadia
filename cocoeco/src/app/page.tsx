@@ -9,6 +9,7 @@ import { RatingStamp } from "@/components/RatingStamp";
 import { Footer } from "@/components/Footer";
 import { TopNav } from "@/components/TopNav";
 import { ProgressBar } from "@/components/ProgressBar";
+import { EmailForm } from "@/components/EmailForm";
 import { parseEmphasis } from "@/components/emphasis";
 
 export default function Home() {
@@ -175,10 +176,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-        <div id="camp-form-slot" className="flex flex-col gap-2">
-          <p>{scenes.camp.form!.pitch}</p>
-          <p className="text-sm opacity-60">{scenes.camp.form!.privacy}</p>
-        </div>
+        <EmailForm />
         <div className="flex flex-col gap-3">
           <p className="voice text-lg font-medium">{scenes.camp.aboutHeading}</p>
           {scenes.camp.aboutLines!.map((line) => (
