@@ -19,15 +19,17 @@ export function EmailForm() {
       setState("invalid");
       return;
     }
+    // M1 本地 stub:记录尽力而为,不阻塞成功态;真实后端接入后
+    // 由请求结果分派 success/failed(failed 文案已备)。
     try {
       const key = "cocoeco-waitlist";
-      const list: string[] = JSON.parse(localStorage.getItem(key) ?? "[]");
+      const list: string[] = JSON.parse(window.localStorage.getItem(key) ?? "[]");
       list.push(email.trim());
-      localStorage.setItem(key, JSON.stringify(list));
-      setState("success");
+      window.localStorage.setItem(key, JSON.stringify(list));
     } catch {
-      setState("failed");
+      // 存储不可用(隐私模式等)不视为提交失败
     }
+    setState("success");
   }
 
   const message =
