@@ -15,6 +15,9 @@ export function projectToScreen(
   w: number,
   h: number,
 ): { x: number; y: number; inFront: boolean } {
+  // 自行刷新相机矩阵:热点定位不依赖渲染循环(后台标签页 rAF 暂停时也正确)
+  cam.updateMatrixWorld();
+  cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
   const v = world.clone().project(cam);
   return { x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, inFront: v.z < 1 };
 }

@@ -47,8 +47,14 @@ export function StageOverlay({ state, dict, dispatch, project }: {
     };
   }, [state, dispatch]);
 
-  // 序幕旁白:lampIntro 逐行浮现,末行动画结束派发 INTRO_DONE
+  // 序幕旁白:lampIntro 逐行浮现,末行动画结束派发 INTRO_DONE。
+  // animationend 在后台标签页可能被节流,定时器兜底(状态机幂等,重复派发无害)。
   const lines = dict.scenes.prologue.narration;
+  useEffect(() => {
+    if (state !== "lampIntro") return;
+    const id = setTimeout(() => dispatch("INTRO_DONE"), lines.length * 900 + 1500);
+    return () => clearTimeout(id);
+  }, [state, dispatch, lines.length]);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-50" data-stage-overlay>

@@ -22,7 +22,9 @@ export function Stage({ reduced, onReady, onAdvance }: {
 }) {
   const holder = useRef<HTMLDivElement>(null);
   const cbs = useRef({ onReady, onAdvance, reduced });
-  cbs.current = { onReady, onAdvance, reduced };
+  useEffect(() => {
+    cbs.current = { onReady, onAdvance, reduced };
+  });
 
   useEffect(() => {
     const el = holder.current!;
@@ -38,20 +40,45 @@ export function Stage({ reduced, onReady, onAdvance }: {
     let disposed = false;
     const stateListeners: Array<(s: StageState) => void> = [];
     const frameListeners: Array<(elapsed: number) => void> = [];
-    const clock = new THREE.Clock();
+    const t0 = performance.now();
+    let lastT = t0;
 
+    // 队列化派发:监听器里再派发(如跳切同步完成)只入队,
+    // 保证所有监听器按状态先后顺序收到通知,不会被重入的旧状态覆盖。
+    let dispatching = false;
+    const queue: StageEvent[] = [];
     const dispatch = (e: StageEvent) => {
-      const to = next(state, e);
-      if (!to) return;
-      state = to;
-      stateListeners.forEach((fn) => fn(to));
-      if (to === "advance") cbs.current.onAdvance();
+      queue.push(e);
+      if (dispatching) return;
+      dispatching = true;
+      while (queue.length) {
+        const ev = queue.shift()!;
+        const to = next(state, ev);
+        if (!to) continue;
+        state = to;
+        stateListeners.forEach((fn) => fn(to));
+        if (to === "advance") cbs.current.onAdvance();
+      }
+      dispatching = false;
     };
 
+    // 窄屏(竖屏)时保持水平视野不变:纵向 fov 按基准纵横比反推,构图不被裁掉左右
+    const fitFov = (c: THREE.PerspectiveCamera) => {
+      const baseFov = c.userData.baseFov as number | undefined;
+      const baseAspect = c.userData.baseAspect as number | undefined;
+      if (!baseFov || !baseAspect) return;
+      if (c.aspect >= baseAspect) {
+        c.fov = baseFov;
+        return;
+      }
+      const t = (Math.tan((baseFov * Math.PI) / 360) * baseAspect) / c.aspect;
+      c.fov = Math.min((Math.atan(t) * 360) / Math.PI, 85);
+    };
     const resize = () => {
       renderer.setSize(el.clientWidth, el.clientHeight);
       if (cam) {
         cam.aspect = el.clientWidth / el.clientHeight;
+        fitFov(cam);
         cam.updateProjectionMatrix();
       }
     };
@@ -60,8 +87,10 @@ export function Stage({ reduced, onReady, onAdvance }: {
     let raf = 0;
     const loop = () => {
       raf = requestAnimationFrame(loop);
-      const dt = clock.getDelta();
-      const elapsed = clock.elapsedTime;
+      const now = performance.now();
+      const dt = Math.min((now - lastT) / 1000, 0.1);
+      lastT = now;
+      const elapsed = (now - t0) / 1000;
       if (assets) {
         const pivot = assets.scene.getObjectByName("fan_pivot");
         if (pivot && !cbs.current.reduced) pivot.rotation.y += 0.15 * dt; // 吊扇缓转
@@ -81,7 +110,13 @@ export function Stage({ reduced, onReady, onAdvance }: {
       const reduced = cbs.current.reduced;
       buildPullback(cam, extractPose(assets.camLamp), extractPose(assets.camFilm), {
         reduced,
-        onDone: () => dispatch("PULLBACK_DONE"),
+        onDone: () => {
+          // 落位到全屋机位后,基准视野切换为 cam_film 的,再按当前视口适配
+          cam!.userData.baseFov = assets!.camFilm.userData.baseFov;
+          cam!.userData.baseAspect = assets!.camFilm.userData.baseAspect;
+          resize();
+          dispatch("PULLBACK_DONE");
+        },
       });
       if (reduced) {
         scatterMotesAlong(motes, trace, win, 1);
@@ -99,6 +134,10 @@ export function Stage({ reduced, onReady, onAdvance }: {
     loadBedroom("/stage/bedroom/bedroom.glb").then((a) => {
       if (disposed) return;
       assets = a;
+      for (const c of [a.camLamp, a.camFilm]) {
+        c.userData.baseFov = c.fov;
+        c.userData.baseAspect = c.aspect || 1.2308; // 导出基准 1600×1300
+      }
       cam = a.camLamp; // 开场停在灯特写
       const trace = a.anchors.get("anchor_trace")!;
       const win = a.anchors.get("anchor_window")!;
@@ -106,6 +145,13 @@ export function Stage({ reduced, onReady, onAdvance }: {
       const motes = createMotes(trace, trace.clone().lerp(win, 0.12));
       a.scene.add(motes);
       resize();
+      if (process.env.NODE_ENV === "development") {
+        (window as unknown as Record<string, unknown>).__stage = Object.assign(
+          Object.create(Object.getPrototypeOf(a)),
+          a,
+          { state: () => state, reduced: () => cbs.current.reduced, dispatch },
+        );
+      }
       dispatch("ASSETS_READY");
       // TODO(M7): 首次 TRACE_CLICKED 是浏览器音频解锁点,环境音在此淡入
     });
@@ -127,7 +173,6 @@ export function Stage({ reduced, onReady, onAdvance }: {
       el.replaceChildren();
     };
     // 回调经 cbs ref 转发,挂载一次即可
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <div ref={holder} className="fixed inset-0 z-40" aria-hidden="true" />;

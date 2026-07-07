@@ -28,12 +28,14 @@ export function buildPullback(
     cam.fov = from.fov + (to.fov - from.fov) * v;
     cam.updateProjectionMatrix();
   };
-  const tl = gsap.timeline({ onComplete: opts.onDone });
   if (dur === 0) {
+    // 跳切:同步落位并回调,不依赖 gsap ticker(后台标签页 rAF 会暂停)
     apply(1);
-    tl.set(t, { v: 1 });
+    const tl = gsap.timeline();
+    opts.onDone();
     return tl;
   }
+  const tl = gsap.timeline({ onComplete: opts.onDone });
   tl.to(t, {
     v: 1,
     duration: dur,

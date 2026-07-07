@@ -9,11 +9,14 @@ export type BedroomAssets = {
   anchors: Map<string, THREE.Vector3>;
 };
 
-// 场景里没有实时灯:烘焙组用 emissiveMap 当底图;保留原贴图的道具按夜景压暗。
+// 场景里没有实时灯:烘焙目标(按节点名前缀识别)用烘焙贴图当底图;
+// 保留原贴图的道具按夜景压暗。注意 GLTFLoader 会清洗节点名(去掉 ".001" 的点号)。
+const BAKED_PREFIX = ["g_", "wL_", "wB_", "floor", "rug"];
 const KEEP_DIM: Array<[prefix: string, factor: number]> = [
   ["ph_", 0.45],
   ["po_", 0.5],
   ["skateboard", 0.55],
+  ["board", 0.55],
 ];
 
 function dimFor(name: string): number {
@@ -36,9 +39,9 @@ export function applyBakedMaterials(root: THREE.Object3D): void {
       obj.material = new THREE.MeshBasicMaterial({ color: 0xff5a1f });
       return;
     }
-    if (src.emissiveMap) {
+    if (BAKED_PREFIX.some((p) => name.startsWith(p))) {
       // 烘焙目标(分组与单烘对象):AgX 已烙进贴图,直接无光照显示
-      obj.material = new THREE.MeshBasicMaterial({ map: src.emissiveMap });
+      obj.material = new THREE.MeshBasicMaterial({ map: src.emissiveMap ?? src.map });
       return;
     }
     const emissive = src.emissive && !src.emissive.equals(new THREE.Color(0, 0, 0));
