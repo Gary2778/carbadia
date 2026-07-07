@@ -149,7 +149,16 @@ export function Stage({ reduced, onReady, onAdvance }: {
         (window as unknown as Record<string, unknown>).__stage = Object.assign(
           Object.create(Object.getPrototypeOf(a)),
           a,
-          { state: () => state, reduced: () => cbs.current.reduced, dispatch },
+          {
+            state: () => state,
+            reduced: () => cbs.current.reduced,
+            dispatch,
+            snap: () => {
+              if (!assets || !cam) return null;
+              renderer.render(assets.scene, cam);
+              return renderer.domElement.toDataURL("image/png");
+            },
+          },
         );
       }
       dispatch("ASSETS_READY");
