@@ -57,3 +57,16 @@ section[id] {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+
+/* 舞台序幕旁白:逐行浮现;reduced-motion 时立即全部可见(动画时长归零仍触发 animationend) */
+.stage-line {
+  opacity: 0;
+  animation: stage-line-in 0.9s ease-out forwards;
+}
+@keyframes stage-line-in {
+  from { opacity: 0; transform: translateY(0.5em); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-line { animation-duration: 0.01s; animation-delay: 0s !important; }
+}
