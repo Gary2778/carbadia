@@ -1,0 +1,246 @@
+@import "tailwindcss";
+
+/* Carbadia 设计 Token + 全站统一背景 */
+:root {
+  --background: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f5f5f7;
+  --border: #e5e5ea;
+  --foreground: #1d1d1f;
+  --muted: #6e6e73;
+  --up: #00a15f;
+  --down: #e0352b;
+  --accent: #0a8a52;
+  --accent-strong: #097a48;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-up: var(--up);
+  --color-down: var(--down);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Helvetica Neue", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -16px rgba(0, 0, 0, 0.12);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.03), 0 4px 14px -8px rgba(0, 0, 0, 0.08);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  /* 全站统一的柔和背景：浅绿氛围光晕 + 极淡像素网格，把各页连成一体 */
+  background-color: var(--background);
+  background-image:
+    radial-gradient(55rem 32rem at 50% -10rem, rgba(10, 138, 82, 0.07), transparent 70%),
+    radial-gradient(40rem 28rem at 100% 2rem, rgba(10, 138, 82, 0.04), transparent 70%),
+    linear-gradient(rgba(10, 138, 82, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 138, 82, 0.022) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 22px 22px, 22px 22px;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  background-attachment: fixed;
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.022em;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+}
+
+/* RTL(阿拉伯语)下数字/价格保持 LTR 书写序,避免 "$" 与符号被 bidi 算法重排 */
+[dir="rtl"] .tnum {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* 深色评级入口贴纸卡:hover 时贴纸抽帧抖动(steps 硬切,与撕纸转场同一套 stop-motion 语感) */
+.sticker-entry:hover .sticker-patch {
+  animation: carbadia-sticker-jiggle 0.55s steps(2, jump-none) infinite;
+}
+@keyframes carbadia-sticker-jiggle {
+  0% {
+    transform: rotate(var(--r)) scale(1);
+  }
+  50% {
+    transform: rotate(calc(var(--r) + 5deg)) scale(1.06);
+  }
+  100% {
+    transform: rotate(calc(var(--r) - 4deg)) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sticker-entry:hover .sticker-patch {
+    animation: none !important;
+  }
+}
+
+/* 评级入口标题:鼠标停在字上,按笔顺逐笔描写(stroke-dashoffset 沿运笔轨迹,悬停重播) */
+.diary-title:hover .stroke-path {
+  stroke-dasharray: 100px; /* 与关键帧的 dashoffset 同用 px:混用无单位值在 Safari 页面缩放下会错位 */
+  animation: carbadia-stroke-write var(--t) linear both;
+  animation-delay: var(--d);
+}
+@keyframes carbadia-stroke-write {
+  from {
+    stroke-dashoffset: 100px;
+  }
+  to {
+    stroke-dashoffset: 0px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .diary-title:hover .stroke-path {
+    animation: none !important;
+    stroke-dasharray: none;
+  }
+}
+
+/* ── Dark 模式（默认）：Peppa 星空夜色 ───────────────────────────── */
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] {
+  --background: #0c1330;
+  --surface: #141b3d;
+  --surface-2: #1d2552;
+  --border: #2c3568;
+  --foreground: #f2f5ff;
+  --muted: #aab2e0;
+  --up: #34d399;
+  --down: #fb7185;
+  --accent: #2ee27f;
+  --accent-strong: #1fcf6e;
+}
+
+/* 夜空底色：上深下浅的靛蓝渐变 + 右上方一抹紫光晕；卡通星星/弯月/山丘由 StarrySky 叠加 */
+html[data-theme="dark"] body {
+  background-color: #0a1130;
+  background-image:
+    radial-gradient(60rem 42rem at 82% -6rem, rgba(124, 96, 210, 0.28), transparent 70%),
+    linear-gradient(180deg, #080d28 0%, #0b1336 46%, #122a4c 100%);
+  background-size: 100% 100%, 100% 100%;
+  background-position: 0 0, 0 0;
+  background-attachment: fixed;
+  background-repeat: no-repeat, no-repeat;
+}
+
+/* 深色模式下卡片更通透，让星空透出来一点 */
+html[data-theme="dark"] body {
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -20px rgba(0, 0, 0, 0.7);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 22px -12px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Ransom-note 剪报字（仅深色标题）─────────────────────────────── */
+/* 剪报标题：纸片有内边距/阴影/倾斜，给行距留余量，避免上下行咬合 */
+.ransom-line {
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.ransom-letter {
+  display: inline-block;
+  padding: 0.02em 0.16em;
+  margin: 0 0.04em;
+  border-radius: 4px;
+  line-height: 1.04;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  letter-spacing: 0;
+}
+
+/* 手机:去掉每字阴影(重绘成本)并收紧内外边距,标题不贴边/不溢出 */
+@media (max-width: 767px) {
+  .ransom-letter {
+    box-shadow: none;
+    padding: 0.02em 0.1em;
+    margin: 0 0.02em;
+  }
+}
+
+/* ── 星星眨眼 ──────────────────────────────────────────────────── */
+@keyframes carbadia-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── 流星:偶尔划过(大半个周期隐身,短暂加速掠过后淡出) ── */
+@keyframes carbadia-shoot {
+  0%,
+  4% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  8% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 1;
+  }
+  26%,
+  100% {
+    opacity: 0;
+    transform: translate(330px, 150px);
+  }
+}
+
+.carbadia-shoot {
+  animation: carbadia-shoot 9s ease-in infinite;
+}
+
+/* ── 主题切换按钮:呼吸灯(柔和脉冲光晕),引导用户发现明/暗切换 ── */
+@keyframes carbadia-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--tg-ring, transparent), 0 0 4px 0 var(--tg-glow, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 1px var(--tg-ring, transparent), 0 0 16px 4px var(--tg-glow, transparent);
+  }
+}
+
+.carbadia-theme-toggle {
+  animation: carbadia-breathe 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carbadia-star {
+    animation: none !important;
+    opacity: 0.9;
+  }
+  /* 减弱动效时:流星静止显示在起点,不再循环掠过 */
+  .carbadia-shoot {
+    animation: none !important;
+    opacity: 0.85;
+  }
+  /* 减弱动效时:呼吸灯不脉冲,但保留一圈静态光晕,仍然醒目 */
+  .carbadia-theme-toggle {
+    animation: none !important;
+    box-shadow: 0 0 0 1px var(--tg-ring, transparent), 0 0 10px 1px var(--tg-glow, transparent);
+  }
+}

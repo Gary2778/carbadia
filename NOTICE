@@ -1,0 +1,36 @@
+Carbadia
+========
+
+版权所有 (Copyright) © 2026 Carbadia 项目作者。保留所有权利 (All rights reserved)。
+
+许可 / License
+--------------
+本仓库为 **公开可查源码 (source-available)**,未授予任何开源许可。
+源码公开仅供查看与学习;未经版权所有者明确书面许可,不授予复制、修改、
+再分发、商用或衍生使用的权利。
+
+This repository is **source-available**: the source is published for viewing
+and study only. No open-source license is granted. No rights to copy, modify,
+redistribute, use commercially, or create derivative works are granted without
+the copyright holder's express written permission.
+
+第三方素材 / Third-party assets
+-------------------------------
+以下文件不属于本项目、不受上述条款覆盖,版权归各自所有者:
+
+- public/patches/{aware,earth,gameboy,heart,recycle,tv,ufo}.webp
+  第三方刺绣贴纸商品图(由项目作者提供,来源为第三方商品图片)。
+  仅用于本演示站的装饰用途;版权归原商品图所有者。
+  Third-party embroidery-patch product images, used for decorative purposes in
+  this demonstration only. Copyright belongs to their respective owners.
+  商用或再分发前必须替换为自有或可商用授权的素材。
+  These must be replaced with owned or commercially-licensed art before any
+  commercial use or redistribution.
+
+关于本项目 / About
+------------------
+Carbadia 是一个**碳信用交易的模拟演示平台 (demo / simulation)**。
+不持有任何金融牌照,不进行真实交易、清算或结算;站内所有标的、行情与市场
+数据均为虚构,不涉及任何真实资金或碳资产。Verra、Gold Standard、UNFCCC、
+CCER 等标准与登记簿名称仅作演示引用;本项目与上述任何机构均无关联,亦未获
+其背书。详见页脚免责声明与 /terms、/privacy。
