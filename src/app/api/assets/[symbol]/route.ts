@@ -52,6 +52,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ symbol: string
     const user = await userPromise;
     let holding = null;
     let myOrders: unknown[] = [];
+    let cashBalance: number | null = null;
     if (user) {
       holding = await prisma.holding.findUnique({
         where: { userId_assetId: { userId: user.id, assetId: pub.assetId } },
@@ -60,10 +61,15 @@ export async function GET(_req: Request, ctx: { params: Promise<{ symbol: string
         where: { userId: user.id, assetId: pub.assetId, status: { in: ["OPEN", "PARTIAL"] } },
         orderBy: { createdAt: "desc" },
       });
+      // 买入侧可用现金提示用(整数分), 只读附加字段; 未登录响应不含该字段(向后兼容)
+      cashBalance = Number(user.cashBalance); // BigInt → number, 否则 JSON 序列化 throw
     }
 
     // 响应含用户持仓/挂单等私有数据, 禁止任何共享缓存(CDN/浏览器)存储
-    return ok({ ...pub.data, holding, myOrders }, { headers: { "Cache-Control": "private, no-store" } });
+    return ok(
+      { ...pub.data, holding, myOrders, ...(cashBalance != null ? { cashBalance } : {}) },
+      { headers: { "Cache-Control": "private, no-store" } }
+    );
   } catch (err) {
     return handle(err);
   }

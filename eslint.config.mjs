@@ -9,6 +9,9 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    // Alternate build directories used for isolated development and QA.
+    ".next-*/**",
+    ".wrangler/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
@@ -18,6 +21,8 @@ const eslintConfig = defineConfig([
     ".claude/**",
     // cocoeco 是同目录下的另一个独立站点项目,不属于本仓库的 lint 范围
     "cocoeco/**",
+    // 生产只读运维脚本是 Node CommonJS(.cjs),require() 是正确写法,不适用 Next/TS 规则集
+    "scripts/prod/*.cjs",
   ]),
 ]);
 

@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next-retirement-qa/
 /out/
 
 # production
@@ -52,6 +53,15 @@ next-env.d.ts
 # superpowers brainstorm mockups
 .superpowers/
 
+# isolated feature worktrees
+.worktrees/
+.release-backups/
+
+# obsidian:保留插件与外观设置,忽略每次开关文件都会变的窗口布局缓存
+**/.obsidian/workspace.json
+**/.obsidian/workspace-mobile.json
+**/.trash/
+
 # 本地素材/个人文件,不入库
 Blender/
 wallpapers/
@@ -60,3 +70,5 @@ patch001.jpg
 
 # 同目录下的另一个独立站点项目(cocoeco.io),不属于本仓库
 cocoeco/
+
+/.next-build-check/

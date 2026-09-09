@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 
-export function Sparkline({ data, width = 96, height = 28 }: { data: number[]; width?: number; height?: number }) {
+export function Sparkline({ data, width = 96, height = 28, ariaLabel = "Trend" }: { data: number[]; width?: number; height?: number; ariaLabel?: string }) {
   const reduced = useReducedMotion();
   if (data.length < 2) return <span className="text-muted text-xs">—</span>;
 
@@ -17,7 +17,7 @@ export function Sparkline({ data, width = 96, height = 28 }: { data: number[]; w
   const up = data[data.length - 1] >= data[0];
 
   return (
-    <svg width={width} height={height} className="overflow-visible">
+    <svg width={width} height={height} className="overflow-visible" role="img" aria-label={ariaLabel}>
       <motion.path
         d={d}
         fill="none"

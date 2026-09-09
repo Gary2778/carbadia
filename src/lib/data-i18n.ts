@@ -16,6 +16,7 @@ const PROJECT_TYPE_KEY: Record<string, ProjectTypeKey> = {
   "蓝碳": "blueCarbon",
   "能效": "efficiency",
   "甲烷回收": "methane",
+  "配额情景": "allowanceScenario",
 };
 
 const COUNTRY_KEY: Record<string, CountryKey> = {
@@ -28,6 +29,8 @@ const COUNTRY_KEY: Record<string, CountryKey> = {
 
 const REGISTRY_KEY: Record<string, RegistryKey> = {
   "国家温室气体自愿减排登记簿": "ccer",
+  // 情景标的的 registry 原值(shadow.ts SCENARIO_ASSETS, ASCII 括号)
+  "情景标的(无真实登记)": "scenario",
 };
 
 // 用户名:种子里带中文角色后缀(如 "Alice(碳资产开发商)"),拆成 名字 + 角色 key

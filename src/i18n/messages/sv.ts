@@ -8,6 +8,11 @@ const sv: Messages = {
     rating: "CCRC",
     ratingFull: "Carbon Credit Rating Connoisseur",
     portfolio: "Portfölj",
+    zoneExchange: "Börs",
+    zoneObservatory: "Observatorium",
+    obsOverview: "Översikt",
+    obsData: "Data",
+    obsArticles: "Artiklar",
     cash: "Tillgängligt saldo",
     logout: "Logga ut",
     login: "Logga in",
@@ -17,14 +22,27 @@ const sv: Messages = {
   },
 
   home: {
-    kicker: "Carbadia · Kolkreditbörs · Demo",
+    kicker: "Carbadia · Koldioxidmarknader · Demo",
     heroLines: ["Ett rättvist pris", "för varje ton koldioxid"],
     heroSubtitle:
-      "En koldioxidmarknadssimulator med en riktig orderboksmotor — öva på standardiserad spot- och OTC-blockhandel med $100,000 i demokapital. Inga riktiga pengar, inget riktigt kol.",
-    startTrading: "Börja handla",
-    browseOtc: "Utforska OTC →",
+      "Två vägar in: en koldioxidmarknadssimulator med en riktig orderboksmotor, och ett observatorium som följer den verkliga marknaden — registerdata, annulleringsflödet och vår tidskrift.",
+    loading: "Laddar…",
+    exCardTitle: "Simulerad börs",
+    exCardDesc: "Öva på standardiserad spot- och OTC-blockhandel med $100,000 i demokapital. Inga riktiga pengar, inget riktigt kol.",
+    exCardCta: "Gå till börsen →",
+    exCardMeta: "Mest aktiv just nu",
+    obCardTitle: "Marknadsobservatorium",
+    obCardDesc: "Verklig registerdata, annulleringstopplistor, CCRC-betyg — och tidskriften Carbadia Observatory.",
+    obCardCta: "Gå till observatoriet →",
+    obCardLatest: "Senaste numret",
+    obCardNoIssue: "Första numret förbereds",
+    obCardRating: "CCRC:s betygsmetod",
+  },
+
+  exchange: {
     spotMarket: "Spotmarknad",
     instrumentsMeta: (n: number) => `${n} instrument · demodata i realtid`,
+    spotEmpty: "Inga instrument listade ännu.",
     loading: "Laddar…",
     thSymbolProject: "Symbol / Projekt",
     thStandard: "Standard",
@@ -33,6 +51,25 @@ const sv: Messages = {
     thTrend24h: "Trend 24h",
     thBidAsk: "Köp / Sälj",
     thVolume24h: "Volym 24h (t)",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "Fältanteckningar och realtidsdata från världens koldioxidmarknader",
+    latestIssue: "Senaste numret",
+    readIssue: "Läs det här numret →",
+    noArticles: "Första numret förbereds.",
+    dataCta: "Öppna databläddraren →",
+    issueN: (n: number) => `Nummer ${n}`,
+  },
+
+  articles: {
+    title: "Artiklar",
+    subtitle: "Tidskriften Carbadia Observatory · engelsk utgåva",
+    empty: "Inga nummer publicerade än.",
+    back: "← Alla artiklar",
+    issueN: (n: number) => `Nummer ${n}`,
+    disclaimer: "Denna tidskrift är endast avsedd för information och utbildning. Inget här utgör investeringsrådgivning.",
   },
 
   market: {
@@ -44,6 +81,9 @@ const sv: Messages = {
     vintage: "Årgång",
     region: "Region",
     registry: "Register",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "Candlestick",
     depth: "Djup",
     intervals: { "1m": "1m", "5m": "5m", "1h": "1h", "1d": "1d" },
@@ -77,6 +117,9 @@ const sv: Messages = {
     available: "Tillgängligt",
     max: "Max",
     estTotal: "Ber. belopp",
+    qtyInvalid: "Ange ett heltal på minst 1.",
+    qtyOverAvailable: "Överstiger ditt tillgängliga innehav.",
+    depthShort: "Otillräckligt orderdjup för denna volym.",
     submitting: "Skickar…",
     submitted: "Skickad",
     cancel: "Makulera",
@@ -282,6 +325,49 @@ const sv: Messages = {
     toDark: "Byt till mörkt läge",
   },
 
+  // 过渡约定: 先填英文原文, 待翻译(en.ts 为 source of truth)
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   data: {
     assetNames: {
       "VCS-FOR-2021": "Kolsänka från skogsförvaltning i Yunnan",
@@ -290,6 +376,8 @@ const sv: Messages = {
       "GS-MANG-2022": "Restaurering av mangrove (blått kol) i Indonesien",
       "VCS-COOK-2020": "Energieffektiva spisar i Kenya",
       "CDM-METH-2019": "Infångning av deponigas i Brasilien",
+      "CEA-SCEN-2026": "Utsläppsrättsscenario för Kinas nationella koldioxidmarknad (CEA)",
+      "CCER-SCEN-2026": "CCER-marknadsindexscenario",
     } as Record<string, string>,
     projectTypes: {
       forestry: "Skoglig kolsänka",
@@ -297,6 +385,7 @@ const sv: Messages = {
       blueCarbon: "Blått kol",
       efficiency: "Energieffektivitet",
       methane: "Metaninfångning",
+      allowanceScenario: "Utsläppsrättsscenario",
     },
     countries: {
       china: "Kina",
@@ -307,6 +396,7 @@ const sv: Messages = {
     },
     registries: {
       ccer: "Kinas CCER-register",
+      scenario: "Scenarioinstrument (inget verkligt register)",
     },
     roles: {
       carbonDeveloper: "Projektutvecklare",

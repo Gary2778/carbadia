@@ -8,6 +8,11 @@ const fi: Messages = {
     rating: "CCRC",
     ratingFull: "Päästöhyvitysten luokitusasiantuntija",
     portfolio: "Salkku",
+    zoneExchange: "Pörssi",
+    zoneObservatory: "Observatorio",
+    obsOverview: "Yleiskatsaus",
+    obsData: "Data",
+    obsArticles: "Artikkelit",
     cash: "Vapaa käteinen",
     logout: "Kirjaudu ulos",
     login: "Kirjaudu",
@@ -17,14 +22,27 @@ const fi: Messages = {
   },
 
   home: {
-    kicker: "Carbadia · Päästöhyvityspörssi · Demo",
+    kicker: "Carbadia · Hiilimarkkinat · Demo",
     heroLines: ["Reilu hinta", "jokaiselle hiilitonnille"],
     heroSubtitle:
-      "Hiilimarkkinasimulaattori aidolla tarjouskirjamoottorilla — harjoittele standardoitua spot- ja OTC-lohkokauppaa $100,000 demovaroilla. Ei oikeaa rahaa, ei oikeaa hiiltä.",
-    startTrading: "Aloita kaupankäynti",
-    browseOtc: "Selaa OTC:tä →",
+      "Kaksi väylää sisään: hiilimarkkinasimulaattori aidolla tarjouskirjamoottorilla, ja observatorio, joka seuraa oikeaa markkinaa — rekisteridataa, mitätöinnit ja lehtemme.",
+    loading: "Ladataan…",
+    exCardTitle: "Simuloitu pörssi",
+    exCardDesc: "Harjoittele standardoitua spot- ja OTC-lohkokauppaa $100,000 demovaroilla. Ei oikeaa rahaa, ei oikeaa hiiltä.",
+    exCardCta: "Siirry pörssiin →",
+    exCardMeta: "Aktiivisin juuri nyt",
+    obCardTitle: "Markkinaobservatorio",
+    obCardDesc: "Aitoa rekisteridataa, mitätöintitilastot, CCRC-luokitukset — ja Carbadia Observatory -lehti.",
+    obCardCta: "Siirry observatorioon →",
+    obCardLatest: "Uusin numero",
+    obCardNoIssue: "Ensimmäinen numero valmisteilla",
+    obCardRating: "CCRC-luokitusmenetelmä",
+  },
+
+  exchange: {
     spotMarket: "Spot-markkina",
     instrumentsMeta: (n: number) => `Instrumentteja: ${n} · live-demodataa`,
+    spotEmpty: "Ei vielä listattuja instrumentteja.",
     loading: "Ladataan…",
     thSymbolProject: "Tunnus / Hanke",
     thStandard: "Standardi",
@@ -33,6 +51,25 @@ const fi: Messages = {
     thTrend24h: "Trendi 24 h",
     thBidAsk: "Osto / Myynti",
     thVolume24h: "Volyymi 24 h (t)",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "Kenttämuistiinpanoja ja live-dataa maailman hiilimarkkinoilta",
+    latestIssue: "Uusin numero",
+    readIssue: "Lue tämä numero →",
+    noArticles: "Ensimmäinen numero valmisteilla.",
+    dataCta: "Avaa data-selain →",
+    issueN: (n: number) => `Numero ${n}`,
+  },
+
+  articles: {
+    title: "Artikkelit",
+    subtitle: "Carbadia Observatory -lehti · englanninkielinen laitos",
+    empty: "Yhtään numeroa ei ole vielä julkaistu.",
+    back: "← Kaikki artikkelit",
+    issueN: (n: number) => `Numero ${n}`,
+    disclaimer: "Tämä lehti on tarkoitettu vain tiedoksi ja opetukseksi. Mikään tässä ei ole sijoitusneuvontaa.",
   },
 
   market: {
@@ -44,6 +81,9 @@ const fi: Messages = {
     vintage: "Vuosikerta",
     region: "Alue",
     registry: "Rekisteri",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "Kynttilät",
     depth: "Syvyys",
     intervals: { "1m": "1m", "5m": "5m", "1h": "1h", "1d": "1d" },
@@ -77,6 +117,9 @@ const fi: Messages = {
     available: "Käytettävissä",
     max: "Maks.",
     estTotal: "Arvioitu summa",
+    qtyInvalid: "Syötä kokonaisluku, vähintään 1.",
+    qtyOverAvailable: "Ylittää käytettävissä olevan omistuksesi.",
+    depthShort: "Tarjouskirjan syvyys ei riitä tälle määrälle.",
     submitting: "Lähetetään…",
     submitted: "Lähetetty",
     cancel: "Peruuta",
@@ -282,6 +325,49 @@ const fi: Messages = {
     toDark: "Vaihda tummaan tilaan",
   },
 
+  // 过渡约定: 先填英文原文, 待翻译(en.ts 为 source of truth)
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   data: {
     assetNames: {
       "VCS-FOR-2021": "Yunnanin metsänhoidon hiilinielu",
@@ -290,6 +376,8 @@ const fi: Messages = {
       "GS-MANG-2022": "Indonesian mangrovien sinihiilen ennallistaminen",
       "VCS-COOK-2020": "Kenian energiatehokkaat keittoliedet",
       "CDM-METH-2019": "Brasilian kaatopaikkakaasun talteenotto",
+      "CEA-SCEN-2026": "Kiinan kansallisen hiilimarkkinan päästöoikeusskenaario (CEA)",
+      "CCER-SCEN-2026": "CCER-markkinaindeksiskenaario",
     } as Record<string, string>,
     projectTypes: {
       forestry: "Metsähiilinielu",
@@ -297,6 +385,7 @@ const fi: Messages = {
       blueCarbon: "Sininen hiili",
       efficiency: "Energiatehokkuus",
       methane: "Metaanin talteenotto",
+      allowanceScenario: "Päästöoikeusskenaario",
     },
     countries: {
       china: "Kiina",
@@ -307,6 +396,7 @@ const fi: Messages = {
     },
     registries: {
       ccer: "Kiinan CCER-rekisteri",
+      scenario: "Skenaarioinstrumentti (ei todellista rekisteriä)",
     },
     roles: {
       carbonDeveloper: "Hiilihankekehittäjä",

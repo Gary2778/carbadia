@@ -2,12 +2,12 @@
 import type { Asset, User } from "@/generated/prisma";
 import { prisma } from "./db";
 import { cancelOrder, placeOrder } from "./matching";
-import { buildQuoteLevels, nextFair, round2, shouldTake, takeQty } from "./bot-math";
+import { buildQuoteLevels, nextFair, shouldTake, takeQty } from "./bot-math";
 
 const TICK_MS = 2500;
 const MAX_DRIFT = 0.02; // 挂单偏离 fair 超过 ±2% 即撤
-const CASH_FLOOR = 1_000_000;
-const CASH_RESET = 50_000_000;
+const CASH_FLOOR = 100_000_000; // $1M(分)
+const CASH_RESET = 5_000_000_000; // $50M(分; BigInt 列容纳)
 const QTY_FLOOR = 10_000;
 const QTY_TOPUP = 1_000_000;
 // 成交/终态订单保留天数(机器人 24/7 刷单, 不清理 SQLite 会无限膨胀)。
@@ -54,6 +54,7 @@ export async function cleanupHistory() {
     const cutoffMs = Date.now() - RETENTION_DAYS * 86_400_000;
     let trades = 0;
     let orders = 0;
+    let ledgers = 0;
     for (let i = 0; i < CLEANUP_MAX_BATCHES; i++) {
       const n = await prisma.$executeRaw`
         DELETE FROM "Trade" WHERE rowid IN (
@@ -82,9 +83,22 @@ export async function cleanupHistory() {
       if (n < CLEANUP_BATCH) break;
       await new Promise((r) => setTimeout(r, 300));
     }
+    // 审计流水: 真人流水永久保留; bot 流水随保留期清理(与成交/订单同策略)
+    for (let i = 0; i < CLEANUP_MAX_BATCHES; i++) {
+      const n = await prisma.$executeRaw`
+        DELETE FROM "LedgerEntry" WHERE rowid IN (
+          SELECT l.rowid FROM "LedgerEntry" l
+          JOIN "User" u ON u.id = l.userId
+          WHERE u.isBot = 1 AND l.createdAt < ${cutoffMs}
+          LIMIT ${CLEANUP_BATCH}
+        )`;
+      ledgers += n;
+      if (n < CLEANUP_BATCH) break;
+      await new Promise((r) => setTimeout(r, 300));
+    }
     // 埋点事件只留 90 天(体量小,单条 DELETE 即可)
     await prisma.$executeRaw`DELETE FROM "Event" WHERE createdAt < ${Date.now() - 90 * 86_400_000}`;
-    console.log(`[bot] 历史清理完成: 成交 ${trades} 条, 订单 ${orders} 条`);
+    console.log(`[bot] 历史清理完成: 成交 ${trades} 条, 订单 ${orders} 条, 流水 ${ledgers} 条`);
   } catch (e) {
     console.error("[bot] 历史清理失败", e);
   }
@@ -139,23 +153,30 @@ async function quoteAsset(asset: Asset, bots: User[]) {
   // 3) 概率吃单(穿越价差的限价单, 打印成交)
   if (shouldTake(rng)) {
     const side = Math.random() < 0.5 ? "BUY" : "SELL";
-    const price = round2(side === "BUY" ? fair * 1.015 : fair * 0.985);
+    const price = Math.round(side === "BUY" ? fair * 1.015 : fair * 0.985);
     await placeOrder({ userId: pick().id, assetId: asset.id, side, type: "LIMIT", price, quantity: takeQty(rng) }).catch((e) => console.error(`[bot] ${asset.symbol} 操作失败`, e instanceof Error ? e.message : e));
   }
 
-  // 4) 自动补给(演示盘不破产)
+  // 4) 自动补给(演示盘不破产; 凭空铸造须留 mint 审计流水, 与余额写入同事务)
   for (const b of bots) {
     const fresh = await prisma.user.findUnique({ where: { id: b.id }, select: { cashBalance: true } });
-    if (fresh && fresh.cashBalance < CASH_FLOOR) {
-      await prisma.user.update({ where: { id: b.id }, data: { cashBalance: CASH_RESET } });
+    if (fresh && Number(fresh.cashBalance) < CASH_FLOOR) {
+      const delta = CASH_RESET - Number(fresh.cashBalance);
+      await prisma.$transaction([
+        prisma.user.update({ where: { id: b.id }, data: { cashBalance: BigInt(CASH_RESET) } }),
+        prisma.ledgerEntry.create({ data: { userId: b.id, account: "CASH", delta: BigInt(delta), reason: "BOT_MINT_CASH" } }),
+      ]);
     }
     const h = await prisma.holding.findUnique({ where: { userId_assetId: { userId: b.id, assetId: asset.id } } });
     if (!h || h.quantity - h.locked < QTY_FLOOR) {
-      await prisma.holding.upsert({
-        where: { userId_assetId: { userId: b.id, assetId: asset.id } },
-        create: { userId: b.id, assetId: asset.id, quantity: QTY_TOPUP, locked: 0 },
-        update: { quantity: { increment: QTY_TOPUP } },
-      });
+      await prisma.$transaction([
+        prisma.holding.upsert({
+          where: { userId_assetId: { userId: b.id, assetId: asset.id } },
+          create: { userId: b.id, assetId: asset.id, quantity: QTY_TOPUP, locked: 0 },
+          update: { quantity: { increment: QTY_TOPUP } },
+        }),
+        prisma.ledgerEntry.create({ data: { userId: b.id, account: "HOLDING", assetId: asset.id, delta: BigInt(QTY_TOPUP), reason: "BOT_MINT_QTY" } }),
+      ]);
     }
   }
 }

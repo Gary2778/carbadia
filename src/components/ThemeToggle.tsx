@@ -1,7 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { motion } from "motion/react";
 import { useTheme } from "@/lib/theme";
 import { useT } from "@/lib/i18n";
 
@@ -12,26 +10,13 @@ export function ThemeToggle() {
 
   return (
     <button
+      type="button"
       onClick={toggle}
       aria-label={dark ? tx.toLight : tx.toDark}
       aria-pressed={dark}
-      style={
-        {
-          // 呼吸灯光晕配色:浅色=暖阳橙,深色=月光金
-          "--tg-glow": dark ? "rgba(255,221,120,0.55)" : "rgba(245,166,35,0.55)",
-          "--tg-ring": dark ? "rgba(255,221,120,0.30)" : "rgba(245,166,35,0.32)",
-        } as CSSProperties
-      }
-      className="carbadia-theme-toggle relative grid h-10 w-10 md:h-9 md:w-9 place-items-center rounded-full border border-border bg-surface-2 text-foreground transition-colors hover:border-accent/60"
+      className="grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-full bg-transparent text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent md:h-9 md:w-9"
     >
-      <motion.span
-        key={dark ? "moon" : "sun"}
-        initial={{ rotate: -90, scale: 0.4, opacity: 0 }}
-        animate={{ rotate: 0, scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 320, damping: 20 }}
-        className="absolute"
-        aria-hidden
-      >
+      <span aria-hidden>
         {dark ? (
           // 弯月
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -52,7 +37,7 @@ export function ThemeToggle() {
             </g>
           </svg>
         )}
-      </motion.span>
+      </span>
     </button>
   );
 }

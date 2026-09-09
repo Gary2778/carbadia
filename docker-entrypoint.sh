@@ -40,13 +40,34 @@ SQL
 done
 
 # P3009 自愈：部署重叠期旧容器还在写库，迁移可能被写锁打断并留下"未完成"记录，
-# 之后每次启动 migrate deploy 都会拒绝执行。清掉未完成记录让其重放（迁移 SQL 均为幂等）。
+# 之后每次启动 migrate deploy 都会拒绝执行。清掉未完成记录让其重放。
+# 注意：迁移 SQL 并非全部幂等（cents_and_ledger 的 ×100 转换重放会二次放大），靠下方迁移前备份对冲。
 # 首次启动时 _prisma_migrations 表不存在，报错属预期，|| true 兜底。
 echo "DELETE FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL;" \
   | npx prisma db execute --stdin --url "$DATABASE_URL" || true
 
+# 有待应用迁移时, 先对卷上数据库做一次覆盖式备份(含 WAL/SHM)。
+# 防迁移重放/失败: P3009 自愈机制会让未完成迁移重放, 而本次分转换迁移非幂等(重放会把已是分的数据再 ×100), 出事时靠该备份回滚。
+DB_FILE="${DATABASE_URL#file:}"
+if npx prisma migrate status 2>/dev/null | grep -q "have not yet been applied"; then
+  # 时间戳备份而非覆盖: 若"迁移已成功但记录未写入"触发重放, 覆盖式备份会把好备份换成已转换库
+  TS="$(date +%s)"
+  echo "[entrypoint] pending migrations detected — backing up ${DB_FILE} (.${TS}.bak)"
+  cp "$DB_FILE" "${DB_FILE}.pre-migrate.${TS}.bak" 2>/dev/null || true
+  cp "${DB_FILE}-wal" "${DB_FILE}-wal.pre-migrate.${TS}.bak" 2>/dev/null || true
+  cp "${DB_FILE}-shm" "${DB_FILE}-shm.pre-migrate.${TS}.bak" 2>/dev/null || true
+  # 只保留最近 2 组备份, 防卷空间被吃满
+  ls -1t "${DB_FILE}".pre-migrate.*.bak 2>/dev/null | tail -n +3 | while read -r f; do rm -f "$f"; done
+fi
+
 echo "[deploy] 应用数据库迁移…"
 npx prisma migrate deploy
+
+# 重建查询统计: 表重建型迁移会连带删掉 sqlite_stat1, 统计缺失时清理任务的
+# DELETE 子查询会选灾难性执行计划并长期霸占写锁(2026-07-17 生产事故)。ANALYZE 幂等且秒级。
+echo "[deploy] ANALYZE 重建查询统计…"
+echo "ANALYZE;" | npx prisma db execute --stdin --url "$DATABASE_URL" \
+  || echo "[deploy] 警告：ANALYZE 失败（库可能被占用），跳过" >&2
 
 # WAL 模式：读写并发更好，且避免机器人写库时把页面读请求锁住。
 # WAL 一经设置持久化在库文件上；若本次因写锁失败，沿用现有模式启动，下次部署再试。

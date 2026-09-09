@@ -27,10 +27,21 @@ the copyright holder's express written permission.
   These must be replaced with owned or commercially-licensed art before any
   commercial use or redistribution.
 
+- public/studio/*
+  用户提供或选择的第三方技术示意照片，版权归各自所有者，不受本项目源码条款覆盖。
+  这些图片不表示 Carbadia 拥有所示设施，也不表示与图片来源存在合作或背书关系。
+  Third-party technology photographs selected or supplied by the project author.
+  Rights remain with their respective owners. These images do not represent
+  Carbadia-owned facilities, partnerships, or endorsements.
+  The flexible-processes photograph is sourced from Air Products' Chemicals page:
+  https://www.airproducts.co.uk/industries/chemicals
+
 关于本项目 / About
 ------------------
-Carbadia 是一个**碳信用交易的模拟演示平台 (demo / simulation)**。
-不持有任何金融牌照,不进行真实交易、清算或结算;站内所有标的、行情与市场
-数据均为虚构,不涉及任何真实资金或碳资产。Verra、Gold Standard、UNFCCC、
+Carbadia Exchange 是一个**碳信用交易的模拟演示平台 (demo / simulation)**。
+不持有任何金融牌照,不进行真实交易、清算或结算;Exchange 的订单、持仓、
+成交与注销均为模拟,不涉及任何真实资金或碳资产。Observatory 另行展示注明来源
+的外部市场与登记簿资料。Studio 展示处于早期阶段的技术研发方向。
+Verra、Gold Standard、UNFCCC、
 CCER 等标准与登记簿名称仅作演示引用;本项目与上述任何机构均无关联,亦未获
 其背书。详见页脚免责声明与 /terms、/privacy。

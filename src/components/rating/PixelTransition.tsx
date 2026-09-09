@@ -14,7 +14,7 @@ const GLOW = "#16d97f";
 // 深色模式:统一的紫色覆盖层(粒子高光用更亮的一档)
 const PURPLE = "#6d3fc4";
 const PURPLE_GLOW = "#b794ff";
-const TARGET = "/rating";
+const TARGET = "/observatory/rating";
 
 type TransitionApi = { enter: (o: Origin) => void };
 const TransitionCtx = createContext<TransitionApi>({ enter: () => {} });
@@ -22,7 +22,7 @@ const RevealCtx = createContext<() => void>(() => {});
 
 export const useRatingTransition = () => useContext(TransitionCtx);
 
-/** /rating 页挂载时调用：若正处于像素遮罩态则丝滑揭开，否则无副作用 */
+/** /observatory/rating 页挂载时调用：若正处于像素遮罩态则丝滑揭开，否则无副作用 */
 export function useRatingReveal() {
   const reveal = useContext(RevealCtx);
   useEffect(() => {

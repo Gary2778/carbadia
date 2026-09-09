@@ -10,6 +10,11 @@ const en = {
     rating: "CCRC",
     ratingFull: "Carbon Credit Rating Connoisseur",
     portfolio: "Portfolio",
+    zoneExchange: "Exchange",
+    zoneObservatory: "Observatory",
+    obsOverview: "Overview",
+    obsData: "Data",
+    obsArticles: "Articles",
     cash: "Available cash",
     logout: "Log out",
     login: "Log in",
@@ -19,14 +24,27 @@ const en = {
   },
 
   home: {
-    kicker: "Carbadia · Carbon Credit Exchange · Demo",
+    kicker: "Carbadia · Carbon Markets · Demo",
     heroLines: ["A fair price for", "every tonne of carbon"],
     heroSubtitle:
-      "A carbon-market simulator with a real order-book engine — practice standardized spot and OTC block trading with $100,000 in demo funds. No real money, no real carbon.",
-    startTrading: "Start trading",
-    browseOtc: "Browse OTC →",
+      "Two ways in: a carbon-market simulator with a real order-book engine, and an observatory tracking the real market — registry data, retirement flows, and our journal.",
+    loading: "Loading…",
+    exCardTitle: "Simulated exchange",
+    exCardDesc: "Practice standardized spot and OTC block trading with $100,000 in demo funds. No real money, no real carbon.",
+    exCardCta: "Enter the exchange →",
+    exCardMeta: "Most active now",
+    obCardTitle: "Market observatory",
+    obCardDesc: "Real registry data, retirement leaderboards, CCRC ratings — and the Carbadia Observatory journal.",
+    obCardCta: "Enter the observatory →",
+    obCardLatest: "Latest issue",
+    obCardNoIssue: "First issue in preparation",
+    obCardRating: "CCRC rating method",
+  },
+
+  exchange: {
     spotMarket: "Spot market",
     instrumentsMeta: (n: number) => `${n} instruments · live demo data`,
+    spotEmpty: "No instruments listed yet.",
     loading: "Loading…",
     thSymbolProject: "Symbol / Project",
     thStandard: "Standard",
@@ -35,6 +53,25 @@ const en = {
     thTrend24h: "24h trend",
     thBidAsk: "Bid / Ask",
     thVolume24h: "24h volume (t)",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "Field notes and live data from the world's carbon markets",
+    latestIssue: "Latest issue",
+    readIssue: "Read this issue →",
+    noArticles: "First issue in preparation.",
+    dataCta: "Open the data browser →",
+    issueN: (n: number) => `Issue ${n}`,
+  },
+
+  articles: {
+    title: "Articles",
+    subtitle: "The Carbadia Observatory journal · English edition",
+    empty: "No issues published yet.",
+    back: "← All articles",
+    issueN: (n: number) => `Issue ${n}`,
+    disclaimer: "This journal is for information and education only. Nothing here is investment advice.",
   },
 
   market: {
@@ -46,6 +83,9 @@ const en = {
     vintage: "Vintage",
     region: "Region",
     registry: "Registry",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "Candles",
     depth: "Depth",
     intervals: { "1m": "1m", "5m": "5m", "1h": "1h", "1d": "1d" },
@@ -79,6 +119,9 @@ const en = {
     available: "Available",
     max: "Max",
     estTotal: "Est. total",
+    qtyInvalid: "Enter a whole number of at least 1.",
+    qtyOverAvailable: "Exceeds your available holdings.",
+    depthShort: "Not enough order-book depth for this size.",
     submitting: "Submitting…",
     submitted: "Submitted",
     cancel: "Cancel",
@@ -284,6 +327,55 @@ const en = {
     toDark: "Switch to dark mode",
   },
 
+  // 真实市场页:注册处公开数据展示。文案红线:统一表述为"注册处公开数据",
+  // 不得出现"经核证的碳减排量"类宣称。CCER(中国数据)板块已迁往中文站 carbadia.co,
+  // 本站只呈现国际注册处数据;OffsetsDB 署名红线不变。
+  //
+  // ★ 约定(用户 2026-07-28 拍板):本 real 命名空间的数据术语在全部 15 种语言里
+  // 统一保持英文(Registries/Issued/Retired/Top retirement beneficiaries…)。
+  // 其余语言文件里这些 key 与本文件同文——这是有意为之,不是漏译,请勿"补翻"。
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   // 数据层:数据库种子是中文,渲染时按 symbol / 内部 key 映射到当前语言(见 data-i18n.ts)
   data: {
     assetNames: {
@@ -293,6 +385,8 @@ const en = {
       "GS-MANG-2022": "Indonesia Mangrove Blue Carbon Restoration",
       "VCS-COOK-2020": "Kenya Efficient Cookstoves",
       "CDM-METH-2019": "Brazil Landfill Gas Capture",
+      "CEA-SCEN-2026": "China National Carbon Market Allowance Scenario (CEA)",
+      "CCER-SCEN-2026": "CCER Market Index Scenario",
     } as Record<string, string>,
     projectTypes: {
       forestry: "Forestry sink",
@@ -300,6 +394,7 @@ const en = {
       blueCarbon: "Blue carbon",
       efficiency: "Efficiency",
       methane: "Methane capture",
+      allowanceScenario: "Allowance scenario",
     },
     countries: {
       china: "China",
@@ -310,6 +405,7 @@ const en = {
     },
     registries: {
       ccer: "China CCER Registry",
+      scenario: "Scenario instrument (no real registry)",
     },
     roles: {
       carbonDeveloper: "Carbon Developer",

@@ -1,5 +1,5 @@
 // 碳信用交易所 — 数据模型
-// 货币与持仓: 现金用元(Float, 2位小数)，碳信用数量用整数(吨 CO2e)
+// 货币与持仓: 现金/价格用整数分, 碳信用数量用整数(吨 CO2e)
 
 generator client {
   provider = "prisma-client-js"
@@ -18,8 +18,8 @@ model User {
   passwordHash String
   role         String   @default("USER") // USER | ADMIN
   isBot        Boolean  @default(false)    // 做市机器人账户
-  cashBalance  Float    @default(0)       // 可用现金(元)
-  lockedCash   Float    @default(0)       // 挂单冻结现金
+  cashBalance  BigInt   @default(0)       // 可用现金(分)
+  lockedCash   BigInt   @default(0)       // 挂单冻结现金(分)
   createdAt    DateTime @default(now())
 
   holdings    Holding[]
@@ -37,12 +37,13 @@ model Asset {
   name        String                    // 项目名称
   standard    String                    // 核证标准: VCS / GS / CCER / CDM
   projectType String                    // 项目类型: 林业碳汇 / 可再生能源 / 甲烷回收 ...
-  vintage     Int                       // 签发年份(vintage)
+  vintage     Int                       // 减排或移除发生年份(vintage), 非签发年份
   country     String                    // 项目所在国家/地区
   registry    String                    // 登记簿
   description String   @default("")
-  lastPrice   Float?                    // 最近成交价
-  anchorPrice Float?                    // 机器人均值回归锚定价
+  lastPrice   Int?                      // 最近成交价(分)
+  anchorPrice Int?                      // 机器人均值回归锚定价(分)
+  isScenario  Boolean  @default(false)  // 情景标的: 价格由模拟盘自主形成, 非真实资产映射
   createdAt   DateTime @default(now())
 
   holdings    Holding[]
@@ -72,11 +73,11 @@ model Order {
   assetId        String
   side           String   // BUY | SELL
   type           String   // LIMIT | MARKET
-  price          Float?   // 限价单价格; 市价单为 null
+  price          Int?     // 限价单价格(分); 市价单为 null
   quantity       Int      // 委托数量(吨)
   filledQuantity Int      @default(0)
   status         String   @default("OPEN") // OPEN | PARTIAL | FILLED | CANCELLED
-  avgFillPrice   Float?
+  avgFillPrice   Int?     // 均价(分, 展示用参考价)
   createdAt      DateTime @default(now())
 
   user       User    @relation(fields: [userId], references: [id])
@@ -96,7 +97,7 @@ model Trade {
   sellOrderId String
   buyerId     String
   sellerId    String
-  price       Float
+  price       Int      // 成交价(分)
   quantity    Int
   createdAt   DateTime @default(now())
 
@@ -109,6 +110,9 @@ model Trade {
   @@index([assetId, createdAt])
   @@index([buyerId, createdAt])
   @@index([sellerId, createdAt])
+  // 清理任务按订单号反查成交(NOT EXISTS 探测)必须走索引——缺失时每个候选订单全表扫描两次(2026-07-17 生产事故)
+  @@index([buyOrderId])
+  @@index([sellOrderId])
 }
 
 // OTC(场外/挂牌)出售挂单
@@ -117,7 +121,7 @@ model OtcListing {
   sellerId    String
   assetId     String
   quantity    Int      // 剩余可售数量
-  pricePerUnit Float   // 单价(元/吨)
+  pricePerUnit Int     // 单价(分/吨)
   minQuantity Int      @default(1) // 最小购买量
   status      String   @default("ACTIVE") // ACTIVE | SOLD | CANCELLED
   createdAt   DateTime @default(now())
@@ -135,8 +139,8 @@ model OtcDeal {
   listingId String
   buyerId   String
   quantity  Int
-  price     Float    // 成交单价
-  total     Float    // 成交总额
+  price     Int      // 成交单价(分)
+  total     Int      // 成交总额(分)
   createdAt DateTime @default(now())
 
   listing OtcListing @relation(fields: [listingId], references: [id])
@@ -160,4 +164,145 @@ model Feedback {
   message   String
   contact   String?
   createdAt DateTime @default(now())
+}
+
+// 审计流水: 一切资金/持仓变动的 append-only 账本。只插入, 永不 update/delete(bot 条目除外, 随保留期清理)。
+// 对账不变量: 每用户每 account 的 Σdelta == 对应列当前值(迁移基线 MIGRATION_BASELINE 起算)。
+// 无外键关系——流水允许在清理删除订单/成交后悬挂引用。
+model LedgerEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  account   String   // CASH | CASH_LOCKED | HOLDING | HOLDING_LOCKED
+  assetId   String?  // HOLDING* 必填
+  delta     BigInt   // 分(CASH*)或 吨(HOLDING*), 有符号
+  reason    String   // ORDER_LOCK|ORDER_UNLOCK|TRADE_SETTLE|PRICE_IMPROVE_REFUND|OTC_LOCK|OTC_UNLOCK|OTC_SETTLE|GRANT|SEED|BOT_MINT_CASH|BOT_MINT_QTY|MIGRATION_BASELINE
+  refType   String?  // ORDER | TRADE | LISTING | DEAL
+  refId     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, account, createdAt])
+  @@index([refType, refId])
+  @@index([createdAt])
+}
+
+// ===== 真实市场只读镜像(与模拟交易域零外键) =====
+
+// 国际注册处真实项目(源: CarbonPlan OffsetsDB, 每日快照全量 upsert)
+model RegistryProject {
+  id            String   @id                 // 直接用源站 project_id(如 VCS5488, ACR1000)
+  registry      String                        // 源站原值: verra / gold-standard / ...
+  name          String   @default("")
+  country       String?
+  category      String?                       // forest / renewable-energy / ...
+  projectType   String?
+  protocol      String?                       // 逗号连接的协议数组
+  status        String?
+  isCompliance  Boolean  @default(false)
+  issued        BigInt   @default(0)          // 累计签发(吨)
+  retired       BigInt   @default(0)          // 累计注销(吨)
+  listedAt      String?                       // 源站 listed/first_issuance 日期(YYYY-MM-DD 字符串)
+  projectUrl    String?                       // 源站详情链接
+  syncedAt      DateTime
+
+  @@index([registry, category])
+  @@index([country])
+  @@index([retired])
+}
+
+// 注册处×年度聚合(源: credits 事件流内存聚合, 每次同步整表重建)
+model RegistryStat {
+  id       String @id @default(cuid())
+  registry String
+  year     Int                                // transaction_date 的年份
+  kind     String                             // issuance | retirement
+  tonnes   BigInt @default(0)
+
+  @@unique([registry, year, kind])
+}
+
+// 注销受益人排行(源: credits 聚合 top100 + UNDISCLOSED 桶, 每次同步整表重建)
+model RegistryBeneficiary {
+  id     String @id @default(cuid())
+  name   String                               // harmonized 名称; 空值合并为 "UNDISCLOSED"
+  tonnes BigInt @default(0)
+
+  @@unique([name])
+}
+
+// CCER 公示/登记项目(源: ccer.cets.org.cn 开放端点, 按 applyId upsert)
+model CcerProject {
+  id            String   @id                  // applyId
+  // 页签枚举(2026-07-19 逐状态实测, 权威注释见 src/lib/real-sync/ccer.ts 头部):
+  // 1=公示中项目 2=已登记项目 3=公示中减排量 4=已登记减排量 5=已签发减排量 6/7=预留(当前为空)
+  dataType      String
+  applyStatus   String                        // 源站状态码
+  statusName    String   @default("")         // 公示中/已登记等源站文案
+  name          String   @default("")
+  owner         String?                       // orgCustomerName
+  projectType   String?
+  methodology   String?                       // methodologyNum + name
+  province      String?
+  expectYearNum Int?                          // 预计年减排量(吨)
+  certifiedNum  Int?                          // 已核证减排量(吨)
+  publicStart   String?
+  publicEnd     String?
+  syncedAt      DateTime
+
+  @@index([dataType, applyStatus])
+}
+
+// 影子价格实验每日快照(与交易域零外键——Trade/Asset 可被清理或重建, 本表永久留存)。
+// realClose 是内部研究字段: 任何 API 路由都不得 select/spread 本表
+// (/api/assets 会整行外溢 Asset, 故真实价放这里而非 Asset 列)。金额一律整数分。
+// shadowClose/Volume 只算撮合成交(OTC 会动 lastPrice 但不进 Trade, 分析时知情)。
+model ShadowSnapshot {
+  id           String   @id @default(cuid())
+  assetSymbol  String                 // 冗余 symbol 而非外键
+  day          String                 // "YYYY-MM-DD", Asia/Shanghai 日界
+  shadowClose  Int?                   // 当日最后一笔撮合成交价(分); 无成交为 null
+  shadowVolume Int      @default(0)   // 当日撮合成交量(吨)
+  realClose    Int?                   // 内部: 真实市场当日收盘/均价(分), 绝不进任何 API
+  createdAt    DateTime @default(now())
+
+  @@unique([assetSymbol, day])
+}
+
+// 同步运行记录(job 持久化日志 + "今天跑过没"判据)
+model SyncRun {
+  id           String    @id @default(cuid())
+  source       String                          // offsetsdb | ccer
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+  status       String    @default("RUNNING")   // RUNNING | OK | FAILED
+  rowsUpserted Int       @default(0)
+  dataAsOf     String?                         // OffsetsDB metadata.generated_at
+  error        String?
+
+  @@index([source, startedAt])
+}
+
+// Permanent simulation receipts. Snapshot fields intentionally have no foreign keys:
+// resetting demo assets must not rewrite historical receipts or imply registry custody.
+model Retirement {
+  id                 String   @id @default(cuid())
+  userId             String
+  assetId            String
+  reference          String   @unique
+  status             String   @default("SIMULATED")
+  quantity           Int      // Integer simulated credits; 1 credit represents 1 tCO2e in the demo only.
+  symbol             String
+  projectName        String
+  registry           String
+  standard           String
+  vintage            Int
+  reason             String
+  beneficiary        String
+  purpose            String
+  publicMessage      String?  // Reserved message field; never published by this application.
+  idempotencyKey     String
+  requestFingerprint String
+  createdAt          DateTime @default(now())
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
 }

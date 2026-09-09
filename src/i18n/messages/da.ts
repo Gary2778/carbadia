@@ -8,6 +8,11 @@ const da: Messages = {
     rating: "CCRC",
     ratingFull: "Ekspert i vurdering af CO2-kreditter",
     portfolio: "Portefølje",
+    zoneExchange: "Børs",
+    zoneObservatory: "Observatorium",
+    obsOverview: "Overblik",
+    obsData: "Data",
+    obsArticles: "Artikler",
     cash: "Disponibel saldo",
     logout: "Log ud",
     login: "Log ind",
@@ -17,14 +22,27 @@ const da: Messages = {
   },
 
   home: {
-    kicker: "Carbadia · CO2-kreditbørs · Demo",
+    kicker: "Carbadia · CO2-markeder · Demo",
     heroLines: ["En fair pris for", "hvert ton CO2"],
     heroSubtitle:
-      "En kulstofmarkeds-simulator med en ægte ordrebogsmotor — øv dig i standardiseret spot- og OTC-blokhandel med $100,000 i demomidler. Ingen rigtige penge, intet rigtigt kulstof.",
-    startTrading: "Begynd at handle",
-    browseOtc: "Se OTC →",
+      "To veje ind: en kulstofmarkeds-simulator med en ægte ordrebogsmotor, og et observatorium der følger det rigtige marked — registerdata, annulleringer og vores tidsskrift.",
+    loading: "Indlæser…",
+    exCardTitle: "Simuleret børs",
+    exCardDesc: "Øv standardiseret spot- og OTC-blokhandel med $100,000 i demomidler. Ingen rigtige penge, intet rigtigt kulstof.",
+    exCardCta: "Gå til børsen →",
+    exCardMeta: "Mest aktiv nu",
+    obCardTitle: "Markedsobservatorium",
+    obCardDesc: "Ægte registerdata, ranglister over annulleringer, CCRC-vurderinger — og tidsskriftet Carbadia Observatory.",
+    obCardCta: "Gå til observatoriet →",
+    obCardLatest: "Seneste udgave",
+    obCardNoIssue: "Første udgave under forberedelse",
+    obCardRating: "CCRC-vurderingsmetode",
+  },
+
+  exchange: {
     spotMarket: "Spotmarked",
     instrumentsMeta: (n: number) => `${n} instrumenter · live demodata`,
+    spotEmpty: "Ingen instrumenter noteret endnu.",
     loading: "Indlæser…",
     thSymbolProject: "Symbol / Projekt",
     thStandard: "Standard",
@@ -33,6 +51,25 @@ const da: Messages = {
     thTrend24h: "24t trend",
     thBidAsk: "Bud / Udbud",
     thVolume24h: "24t volumen (t)",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "Feltnoter og live data fra verdens kulstofmarkeder",
+    latestIssue: "Seneste udgave",
+    readIssue: "Læs denne udgave →",
+    noArticles: "Første udgave under forberedelse.",
+    dataCta: "Åbn databrowseren →",
+    issueN: (n: number) => `Udgave ${n}`,
+  },
+
+  articles: {
+    title: "Artikler",
+    subtitle: "Tidsskriftet Carbadia Observatory · engelsk udgave",
+    empty: "Ingen udgaver udgivet endnu.",
+    back: "← Alle artikler",
+    issueN: (n: number) => `Udgave ${n}`,
+    disclaimer: "Dette tidsskrift er kun til information og undervisning. Intet heri er investeringsrådgivning.",
   },
 
   market: {
@@ -44,6 +81,9 @@ const da: Messages = {
     vintage: "Årgang",
     region: "Region",
     registry: "Register",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "Candlestick",
     depth: "Dybde",
     intervals: { "1m": "1m", "5m": "5m", "1h": "1t", "1d": "1d" },
@@ -77,6 +117,9 @@ const da: Messages = {
     available: "Disponibel",
     max: "Maks",
     estTotal: "Est. total",
+    qtyInvalid: "Angiv et helt tal på mindst 1.",
+    qtyOverAvailable: "Overstiger din tilgængelige beholdning.",
+    depthShort: "Ikke nok dybde i ordrebogen til denne mængde.",
     submitting: "Sender…",
     submitted: "Sendt",
     cancel: "Annuller",
@@ -282,6 +325,49 @@ const da: Messages = {
     toDark: "Skift til mørkt tema",
   },
 
+  // 过渡约定: 先填英文原文, 待翻译(en.ts 为 source of truth)
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   data: {
     assetNames: {
       "VCS-FOR-2021": "Kulstofbinding gennem skovforvaltning i Yunnan",
@@ -290,6 +376,8 @@ const da: Messages = {
       "GS-MANG-2022": "Genopretning af mangrove og blåt kulstof i Indonesien",
       "VCS-COOK-2020": "Effektive kogekomfurer i Kenya",
       "CDM-METH-2019": "Opsamling af lossepladsgas i Brasilien",
+      "CEA-SCEN-2026": "Kvotescenarie for Kinas nationale CO₂-marked (CEA)",
+      "CCER-SCEN-2026": "CCER-markedsindeks-scenarie",
     } as Record<string, string>,
     projectTypes: {
       forestry: "Skovkulstof",
@@ -297,6 +385,7 @@ const da: Messages = {
       blueCarbon: "Blåt kulstof",
       efficiency: "Energieffektivitet",
       methane: "Metanopsamling",
+      allowanceScenario: "Kvotescenarie",
     },
     countries: {
       china: "Kina",
@@ -307,6 +396,7 @@ const da: Messages = {
     },
     registries: {
       ccer: "Kinas CCER-register",
+      scenario: "Scenarieinstrument (intet reelt register)",
     },
     roles: {
       carbonDeveloper: "CO2-projektudvikler",

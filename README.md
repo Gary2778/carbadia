@@ -1,13 +1,17 @@
-# Carbadia · 碳市场模拟交易所（Demo）
+# Carbadia · Exchange / Observatory / Studio
 
-一个明确标注为模拟盘的碳信用交易所：真实的订单簿撮合引擎 + OTC 大宗挂牌，行情由做市机器人生成，不涉及任何真实资金或碳资产。
+Carbadia 包含三个独立板块：Exchange 提供碳信用模拟交易，Observatory 展示注明来源的市场研究与登记簿资料，Studio 介绍早期技术研发方向。首页还提供开发中的 Pro 概念预览。
+
+Exchange 使用真实的订单簿撮合逻辑与 OTC 挂牌流程，行情由做市机器人生成，不涉及任何真实资金或碳资产。
 
 - **订单簿撮合**：标准化现货交易，限价单 / 市价单，价格-时间优先撮合引擎。
 - **OTC 挂牌**：面向大宗的场外交易，卖方挂牌、买方按单价直接成交（支持部分成交、最小购买量）。
 - **自绘 K 线 / 深度图**：不依赖图表库，前端从成交记录实时聚合 OHLCV 并手写渲染分时 K 线与买卖盘深度图。
 - **做市机器人**：7x24 随机游走报价、多档买卖盘挂单、概率吃单，持续生成行情与成交历史。
 - **CCRC 评级演示页**：碳信用项目评级展示（额外性 / 持久性 / 防重复计算 / 共同效益等维度）。
-- **16 语言界面**（含阿拉伯语 RTL）：English 及丹麦语、德语、西班牙语、法语、意大利语、荷兰语、波兰语、葡萄牙语、芬兰语、瑞典语、日语、韩语、阿拉伯语、简体中文、繁体中文。
+- **15 种界面语言**（含阿拉伯语 RTL）：English 及丹麦语、德语、西班牙语、法语、意大利语、荷兰语、波兰语、葡萄牙语、芬兰语、瑞典语、日语、韩语、阿拉伯语、繁体中文；部分新板块提供英文与繁体中文。
+- **模拟注销与私有凭证**：按账户记录模拟注销，使用幂等请求防止重复扣减，不产生登记簿注销或真实减排声明。
+- **Studio 技术方向**：直接空气捕集、可再生电力合成燃料、二氧化碳还原、新型费托合成、化工过程柔性运行。
 - **浅色 / 深色双主题**：浅色 "Apple-light"，深色"剪报拼贴"（stop-motion 抽帧美学、撕纸转场）。
 
 > ⚠️ 仅供学习演示，非真实交易、不涉及真实资金或碳资产。
@@ -59,17 +63,16 @@ src/
     api.ts             统一响应与错误处理
     format.ts          前端 fetch 封装 + 数字格式化
   i18n/
-    config.ts          16 语言注册表（含 RTL 标记）
+    config.ts          15 语言注册表（含 RTL 标记）
     messages/          各语言文案（en.ts 为 source of truth）
   components/
     charts/            自绘 CandleChart / DepthChart / Sparkline
     rating/            CCRC 评级页动效（撕纸转场等）
   app/
-    page.tsx           行情总览
-    market/[symbol]/   交易页（订单簿 / 下单 / K 线&深度图 / 最近成交 / 我的委托）
-    otc/               OTC 挂牌板
-    portfolio/         我的资产（持仓 / 委托 / 成交历史）
-    rating/            CCRC 评级演示页
+    page.tsx           产品首页
+    exchange/          模拟市场、交易、持仓、委托、历史与注销
+    observatory/       市场研究、外部登记簿数据与评级演示
+    studio/            技术方向、发展计划与合作联系入口
     login, register/   认证
     api/               Route Handlers（auth / assets / orders / otc / portfolio）
 ```
@@ -89,7 +92,9 @@ src/
 | `DATABASE_URL` | 是 | SQLite 连接串。线上必须指向持久卷,形如 `file:/data/carbadia.db`(容器启动脚本会校验前缀) |
 | `SESSION_SECRET` | 是 | 会话 cookie 的 HMAC 签名密钥,用 `openssl rand -hex 32` 生成;生产环境缺失会拒绝启动(本地 dev 有内置回退) |
 | `BOT_DISABLED` | 否 | 设为 `1` 时不启动做市机器人 |
+| `SYNC_DISABLED` | 否 | 设为 `1` 时不启动外部数据同步；本地页面预览建议与 `BOT_DISABLED=1` 一起使用 |
 | `RETENTION_DAYS` | 否 | 历史数据保留天数,默认 `7`;只清理"机器人自成交"及机器人的孤儿终态订单,任何真人参与的成交/订单永久保留(机器人清理任务与容器启动清理共用;500MB 卷约容纳一周数据) |
+| `PROXY_SECRET` | 否 | 反代密钥(生产建议设)。Cloudflare Worker 反代转发时注入请求头 `x-proxy-secret=<此值>`;应用只在该头匹配时才信任 `cf-connecting-ip` 做限流分桶,阻止直连 `*.up.railway.app` 伪造客户端 IP 绕过限流。用 `openssl rand -hex 32` 生成;未设时沿用旧行为(直接信任 `cf-connecting-ip`) |
 
 ## 常用脚本
 
@@ -97,13 +102,13 @@ src/
 npm run db:reset    # 重置数据库（清空并重跑迁移）
 npm run db:seed     # 重新灌入演示数据
 npm run db:studio   # Prisma Studio 可视化查看数据
-npm run build       # 生产构建
+RUST_LOG=info npm test # 完整测试；info 避免宿主日志设置干扰 Prisma 创建测试库
+npm run lint
+BOT_DISABLED=1 SYNC_DISABLED=1 npm run build # 生产构建
 ```
 
-## 后续可扩展方向
+## 运行与发布
 
-- KYC / 实名与合规、托管账户与法币出入金
-- WebSocket 实时推送（替代当前 3s 轮询）
-- 碳信用注销（retirement）与抵消证书、项目尽职调查资料
-- 管理后台、风控限额与审计日志
-- 金额改用整数最小单位（分）以彻底规避浮点误差
+Railway 使用 Dockerfile 构建，并在构建时执行测试与 ESLint。容器启动时校验环境变量、应用 Prisma 迁移，然后启动 Next.js；生产 SQLite 必须挂载在 `/data` 持久化卷上。
+
+本地界面预览使用 `BOT_DISABLED=1 SYNC_DISABLED=1 npm run dev`。测试使用独立测试库；部署前应验证待应用迁移并保留可恢复的数据库备份。

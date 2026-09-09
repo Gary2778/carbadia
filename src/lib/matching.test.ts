@@ -74,7 +74,7 @@ beforeEach(async () => {
 async function fundUser(name: string, cash: number) {
   initialCashTotal += cash;
   return prisma.user.create({
-    data: { email: `${name}@invariant.test`, name, passwordHash: "test", cashBalance: cash },
+    data: { email: `${name}@invariant.test`, name, passwordHash: "test", cashBalance: BigInt(cash) },
   });
 }
 
@@ -110,8 +110,8 @@ async function expectInvariants() {
   const openOrders = await prisma.order.findMany({ where: { status: { in: ["OPEN", "PARTIAL"] } } });
   const activeListings = await prisma.otcListing.findMany({ where: { status: "ACTIVE" } });
 
-  const totalCash = users.reduce((sum, u) => sum + u.cashBalance + u.lockedCash, 0);
-  expect(totalCash).toBeCloseTo(initialCashTotal, 2);
+  const totalCash = users.reduce((sum, u) => sum + Number(u.cashBalance) + Number(u.lockedCash), 0);
+  expect(totalCash).toBe(initialCashTotal);
 
   const qtyByAsset = new Map<string, number>();
   for (const h of holdings) qtyByAsset.set(h.assetId, (qtyByAsset.get(h.assetId) ?? 0) + h.quantity);
@@ -123,7 +123,7 @@ async function expectInvariants() {
     const expectedLocked = openOrders
       .filter((o) => o.userId === u.id && o.side === "BUY" && o.price != null)
       .reduce((sum, o) => sum + (o.price ?? 0) * (o.quantity - o.filledQuantity), 0);
-    expect(u.lockedCash).toBeCloseTo(expectedLocked, 2);
+    expect(Number(u.lockedCash)).toBe(expectedLocked);
   }
 
   for (const h of holdings) {
@@ -137,11 +137,11 @@ async function expectInvariants() {
   }
 }
 
-/** 标准盘面: alice 纯现金买家, bob 现金 + 持仓卖家 */
+/** 标准盘面: alice 纯现金买家, bob 现金 + 持仓卖家(金额一律整数分) */
 async function setupMarket() {
   const asset = await createAsset();
-  const alice = await fundUser("alice", 100_000);
-  const bob = await fundUser("bob", 100_000);
+  const alice = await fundUser("alice", 10_000_000);
+  const bob = await fundUser("bob", 10_000_000);
   await grantHolding(bob.id, asset.id, 1_000);
   return { asset, alice, bob };
 }
@@ -151,23 +151,23 @@ describe("撮合引擎 — 资金守恒不变量", () => {
     const { asset, alice, bob } = await setupMarket();
 
     const sell = await matching.placeOrder({
-      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 100, quantity: 50,
+      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 10_000, quantity: 50,
     });
     expect(sell.order.status).toBe("OPEN");
     await expectInvariants();
 
     const buy = await matching.placeOrder({
-      userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 100, quantity: 50,
+      userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 10_000, quantity: 50,
     });
     expect(buy.order.status).toBe("FILLED");
     expect(buy.filledQty).toBe(50);
     await expectInvariants();
 
     const aliceAfter = await prisma.user.findUniqueOrThrow({ where: { id: alice.id } });
-    expect(aliceAfter.cashBalance).toBeCloseTo(95_000, 2);
-    expect(aliceAfter.lockedCash).toBeCloseTo(0, 2);
+    expect(Number(aliceAfter.cashBalance)).toBe(9_500_000);
+    expect(Number(aliceAfter.lockedCash)).toBe(0);
     const bobAfter = await prisma.user.findUniqueOrThrow({ where: { id: bob.id } });
-    expect(bobAfter.cashBalance).toBeCloseTo(105_000, 2);
+    expect(Number(bobAfter.cashBalance)).toBe(10_500_000);
 
     const aliceHolding = await prisma.holding.findUniqueOrThrow({
       where: { userId_assetId: { userId: alice.id, assetId: asset.id } },
@@ -183,32 +183,32 @@ describe("撮合引擎 — 资金守恒不变量", () => {
     expect(maker.status).toBe("FILLED");
     const trades = await prisma.trade.findMany();
     expect(trades).toHaveLength(1);
-    expect(trades[0]).toMatchObject({ price: 100, quantity: 50, buyerId: alice.id, sellerId: bob.id });
+    expect(trades[0]).toMatchObject({ price: 10_000, quantity: 50, buyerId: alice.id, sellerId: bob.id });
     const assetAfter = await prisma.asset.findUniqueOrThrow({ where: { id: asset.id } });
-    expect(assetAfter.lastPrice).toBe(100);
+    expect(assetAfter.lastPrice).toBe(10_000);
   });
 
   it("限价买部分成交: 余量挂簿且冻结与订单簿一致", async () => {
     const { asset, alice, bob } = await setupMarket();
 
     await matching.placeOrder({
-      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 100, quantity: 30,
+      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 10_000, quantity: 30,
     });
     await expectInvariants();
 
     const buy = await matching.placeOrder({
-      userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 100, quantity: 50,
+      userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 10_000, quantity: 50,
     });
     expect(buy.order.status).toBe("PARTIAL");
     expect(buy.filledQty).toBe(30);
     await expectInvariants();
 
     const aliceAfter = await prisma.user.findUniqueOrThrow({ where: { id: alice.id } });
-    expect(aliceAfter.cashBalance).toBeCloseTo(95_000, 2);
-    expect(aliceAfter.lockedCash).toBeCloseTo(2_000, 2); // 100 × 未成交 20
+    expect(Number(aliceAfter.cashBalance)).toBe(9_500_000);
+    expect(Number(aliceAfter.lockedCash)).toBe(200_000); // 10_000 分 × 未成交 20
 
     const book = await matching.getOrderBook(asset.id);
-    expect(book.bids).toEqual([{ price: 100, quantity: 20 }]);
+    expect(book.bids).toEqual([{ price: 10_000, quantity: 20 }]);
     expect(book.asks).toEqual([]);
   });
 
@@ -216,44 +216,44 @@ describe("撮合引擎 — 资金守恒不变量", () => {
     const { asset, alice, bob } = await setupMarket();
 
     await matching.placeOrder({
-      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 95, quantity: 40,
+      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 9_500, quantity: 40,
     });
     await expectInvariants();
 
     const buy = await matching.placeOrder({
-      userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 100, quantity: 40,
+      userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 10_000, quantity: 40,
     });
     expect(buy.order.status).toBe("FILLED");
-    expect(buy.order.avgFillPrice).toBeCloseTo(95, 2);
+    expect(buy.order.avgFillPrice).toBe(9_500);
     await expectInvariants();
 
-    // 冻结 100×40=4000,按 95 成交只花 3800,差价 200 必须回到可用现金
+    // 冻结 10000×40=400000,按 9500 成交只花 380000,差价 20000 分必须回到可用现金
     const aliceAfter = await prisma.user.findUniqueOrThrow({ where: { id: alice.id } });
-    expect(aliceAfter.cashBalance).toBeCloseTo(96_200, 2);
-    expect(aliceAfter.lockedCash).toBeCloseTo(0, 2);
+    expect(Number(aliceAfter.cashBalance)).toBe(9_620_000);
+    expect(Number(aliceAfter.lockedCash)).toBe(0);
     const bobAfter = await prisma.user.findUniqueOrThrow({ where: { id: bob.id } });
-    expect(bobAfter.cashBalance).toBeCloseTo(103_800, 2);
+    expect(Number(bobAfter.cashBalance)).toBe(10_380_000);
   });
 
   it("市价买受可用现金约束: 买得起多少成交多少, 余量撤销", async () => {
     const { asset, bob } = await setupMarket();
-    const charlie = await fundUser("charlie", 275);
+    const charlie = await fundUser("charlie", 27_500);
 
     await matching.placeOrder({
-      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 50, quantity: 100,
+      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 5_000, quantity: 100,
     });
     await expectInvariants();
 
     const buy = await matching.placeOrder({
       userId: charlie.id, assetId: asset.id, side: "BUY", type: "MARKET", quantity: 10,
     });
-    // $275 按 $50/吨只买得起 5 吨,剩余委托量随市价单一并撤销
+    // 27500 分按 5000 分/吨只买得起 5 吨,剩余委托量随市价单一并撤销
     expect(buy.filledQty).toBe(5);
     expect(buy.order.status).toBe("CANCELLED");
     await expectInvariants();
 
     const charlieAfter = await prisma.user.findUniqueOrThrow({ where: { id: charlie.id } });
-    expect(charlieAfter.cashBalance).toBeCloseTo(25, 2);
+    expect(Number(charlieAfter.cashBalance)).toBe(2_500);
     const charlieHolding = await prisma.holding.findUniqueOrThrow({
       where: { userId_assetId: { userId: charlie.id, assetId: asset.id } },
     });
@@ -268,7 +268,7 @@ describe("撮合引擎 — 资金守恒不变量", () => {
     const { asset, alice, bob } = await setupMarket();
 
     await matching.placeOrder({
-      userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 100, quantity: 10,
+      userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 10_000, quantity: 10,
     });
     await expectInvariants();
 
@@ -280,24 +280,24 @@ describe("撮合引擎 — 资金守恒不变量", () => {
     await expectInvariants();
 
     const bobAfter = await prisma.user.findUniqueOrThrow({ where: { id: bob.id } });
-    expect(bobAfter.cashBalance).toBeCloseTo(101_000, 2);
+    expect(Number(bobAfter.cashBalance)).toBe(10_100_000);
     const bobHolding = await prisma.holding.findUniqueOrThrow({
       where: { userId_assetId: { userId: bob.id, assetId: asset.id } },
     });
     expect(bobHolding.quantity).toBe(990);
     expect(bobHolding.locked).toBe(0); // 未成交的 15 吨必须解冻
     const aliceAfter = await prisma.user.findUniqueOrThrow({ where: { id: alice.id } });
-    expect(aliceAfter.lockedCash).toBeCloseTo(0, 2);
+    expect(Number(aliceAfter.lockedCash)).toBe(0);
   });
 
   it("撤销部分成交买单: 只退未成交部分的冻结现金", async () => {
     const { asset, alice, bob } = await setupMarket();
 
     await matching.placeOrder({
-      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 80, quantity: 5,
+      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 8_000, quantity: 5,
     });
     const buy = await matching.placeOrder({
-      userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 80, quantity: 20,
+      userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 8_000, quantity: 20,
     });
     expect(buy.order.status).toBe("PARTIAL");
     await expectInvariants();
@@ -305,10 +305,10 @@ describe("撮合引擎 — 资金守恒不变量", () => {
     await matching.cancelOrder(alice.id, buy.order.id);
     await expectInvariants();
 
-    // 已成交 5 吨花 400,未成交 15 吨的 1200 元冻结应全额退回
+    // 已成交 5 吨花 40000 分,未成交 15 吨的 120000 分冻结应全额退回
     const aliceAfter = await prisma.user.findUniqueOrThrow({ where: { id: alice.id } });
-    expect(aliceAfter.cashBalance).toBeCloseTo(99_600, 2);
-    expect(aliceAfter.lockedCash).toBeCloseTo(0, 2);
+    expect(Number(aliceAfter.cashBalance)).toBe(9_960_000);
+    expect(Number(aliceAfter.lockedCash)).toBe(0);
 
     // 已撤销订单不可重复撤销
     await expect(matching.cancelOrder(alice.id, buy.order.id)).rejects.toThrow(matching.TradingError);
@@ -319,7 +319,7 @@ describe("撮合引擎 — 资金守恒不变量", () => {
     const { asset, alice, bob } = await setupMarket();
 
     const sell = await matching.placeOrder({
-      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 100, quantity: 20,
+      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 10_000, quantity: 20,
     });
     await expectInvariants();
 
@@ -340,10 +340,10 @@ describe("撮合引擎 — 资金守恒不变量", () => {
     const { asset, bob } = await setupMarket();
 
     await matching.placeOrder({
-      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 100, quantity: 10,
+      userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 10_000, quantity: 10,
     });
     const buy = await matching.placeOrder({
-      userId: bob.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 100, quantity: 10,
+      userId: bob.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 10_000, quantity: 10,
     });
     // 价格交叉但同属 bob,不能成交,双边继续挂簿
     expect(buy.filledQty).toBe(0);
@@ -352,7 +352,7 @@ describe("撮合引擎 — 资金守恒不变量", () => {
     await expectInvariants();
 
     const bobAfter = await prisma.user.findUniqueOrThrow({ where: { id: bob.id } });
-    expect(bobAfter.lockedCash).toBeCloseTo(1_000, 2);
+    expect(Number(bobAfter.lockedCash)).toBe(100_000);
     const bobHolding = await prisma.holding.findUniqueOrThrow({
       where: { userId_assetId: { userId: bob.id, assetId: asset.id } },
     });
@@ -365,10 +365,10 @@ describe("撮合引擎 — 资金守恒不变量", () => {
 
     // 数量非法
     await expect(
-      matching.placeOrder({ ...base, side: "BUY", type: "LIMIT", price: 100, quantity: 0 }),
+      matching.placeOrder({ ...base, side: "BUY", type: "LIMIT", price: 10_000, quantity: 0 }),
     ).rejects.toThrow(matching.TradingError);
     await expect(
-      matching.placeOrder({ ...base, side: "BUY", type: "LIMIT", price: 100, quantity: -3 }),
+      matching.placeOrder({ ...base, side: "BUY", type: "LIMIT", price: 10_000, quantity: -3 }),
     ).rejects.toThrow(matching.TradingError);
     // 限价单价格非法
     await expect(
@@ -378,27 +378,41 @@ describe("撮合引擎 — 资金守恒不变量", () => {
       matching.placeOrder({ ...base, side: "BUY", type: "LIMIT", price: 0, quantity: 10 }),
     ).rejects.toThrow(matching.TradingError);
     await expect(
-      matching.placeOrder({ ...base, side: "SELL", type: "LIMIT", price: -5, quantity: 10 }),
+      matching.placeOrder({ ...base, side: "SELL", type: "LIMIT", price: -500, quantity: 10 }),
     ).rejects.toThrow(matching.TradingError);
     // 现金不足 / 持仓不足
     await expect(
-      matching.placeOrder({ ...base, side: "BUY", type: "LIMIT", price: 300, quantity: 1_000 }),
+      matching.placeOrder({ ...base, side: "BUY", type: "LIMIT", price: 30_000, quantity: 1_000 }),
     ).rejects.toThrow(matching.TradingError);
     await expect(
-      matching.placeOrder({ ...base, side: "SELL", type: "LIMIT", price: 100, quantity: 1 }),
+      matching.placeOrder({ ...base, side: "SELL", type: "LIMIT", price: 10_000, quantity: 1 }),
     ).rejects.toThrow(matching.TradingError);
     await expect(
       matching.placeOrder({
-        userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 100, quantity: 2_000,
+        userId: bob.id, assetId: asset.id, side: "SELL", type: "LIMIT", price: 10_000, quantity: 2_000,
       }),
     ).rejects.toThrow(matching.TradingError);
     // 标的不存在
     await expect(
-      matching.placeOrder({ userId: alice.id, assetId: "no-such-asset", side: "BUY", type: "LIMIT", price: 100, quantity: 1 }),
+      matching.placeOrder({ userId: alice.id, assetId: "no-such-asset", side: "BUY", type: "LIMIT", price: 10_000, quantity: 1 }),
     ).rejects.toThrow(matching.TradingError);
 
     // 全部被拒后,资金与持仓必须原封不动
     await expectInvariants();
     expect(await prisma.order.count()).toBe(0);
+  });
+
+  it("价格必须是整数分", async () => {
+    const { asset, alice } = await setupMarket();
+    await expect(
+      matching.placeOrder({ userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 100.5, quantity: 1 }),
+    ).rejects.toThrow(/integer/i);
+  });
+
+  it("超过单笔名义额上限拒单", async () => {
+    const { asset, alice } = await setupMarket();
+    await expect(
+      matching.placeOrder({ userId: alice.id, assetId: asset.id, side: "BUY", type: "LIMIT", price: 100_000_000, quantity: 11 }),
+    ).rejects.toThrow(/notional/i);
   });
 });

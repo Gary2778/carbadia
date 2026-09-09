@@ -17,13 +17,17 @@ export async function POST(req: Request) {
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return fail("This email is already registered", 409);
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        passwordHash: hashPassword(password),
-        cashBalance: 100000, // 新用户赠送 $100,000 演示资金
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          email,
+          name,
+          passwordHash: hashPassword(password),
+          cashBalance: BigInt(10_000_000), // 新用户赠送 $100,000 演示资金(整数分)
+        },
+      });
+      await tx.ledgerEntry.create({ data: { userId: u.id, account: "CASH", delta: BigInt(10_000_000), reason: "GRANT" } });
+      return u;
     });
     await createSession(user.id);
     void prisma.event.create({ data: { name: "register" } }).catch(() => {});

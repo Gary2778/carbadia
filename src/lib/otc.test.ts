@@ -74,7 +74,7 @@ beforeEach(async () => {
 async function fundUser(name: string, cash: number) {
   initialCashTotal += cash;
   return prisma.user.create({
-    data: { email: `${name}@invariant.test`, name, passwordHash: "test", cashBalance: cash },
+    data: { email: `${name}@invariant.test`, name, passwordHash: "test", cashBalance: BigInt(cash) },
   });
 }
 
@@ -110,8 +110,8 @@ async function expectInvariants() {
   const openOrders = await prisma.order.findMany({ where: { status: { in: ["OPEN", "PARTIAL"] } } });
   const activeListings = await prisma.otcListing.findMany({ where: { status: "ACTIVE" } });
 
-  const totalCash = users.reduce((sum, u) => sum + u.cashBalance + u.lockedCash, 0);
-  expect(totalCash).toBeCloseTo(initialCashTotal, 2);
+  const totalCash = users.reduce((sum, u) => sum + Number(u.cashBalance) + Number(u.lockedCash), 0);
+  expect(totalCash).toBe(initialCashTotal);
 
   const qtyByAsset = new Map<string, number>();
   for (const h of holdings) qtyByAsset.set(h.assetId, (qtyByAsset.get(h.assetId) ?? 0) + h.quantity);
@@ -123,7 +123,7 @@ async function expectInvariants() {
     const expectedLocked = openOrders
       .filter((o) => o.userId === u.id && o.side === "BUY" && o.price != null)
       .reduce((sum, o) => sum + (o.price ?? 0) * (o.quantity - o.filledQuantity), 0);
-    expect(u.lockedCash).toBeCloseTo(expectedLocked, 2);
+    expect(Number(u.lockedCash)).toBe(expectedLocked);
   }
 
   for (const h of holdings) {
@@ -137,11 +137,11 @@ async function expectInvariants() {
   }
 }
 
-/** 标准盘面: bob 持仓卖家, alice 现金买家 */
+/** 标准盘面: bob 持仓卖家, alice 现金买家(金额一律整数分) */
 async function setupOtc() {
   const asset = await createAsset();
-  const bob = await fundUser("bob", 10_000);
-  const alice = await fundUser("alice", 50_000);
+  const bob = await fundUser("bob", 1_000_000);
+  const alice = await fundUser("alice", 5_000_000);
   await grantHolding(bob.id, asset.id, 100);
   return { asset, alice, bob };
 }
@@ -151,7 +151,7 @@ describe("OTC 挂牌 — 资金守恒不变量", () => {
     const { asset, bob } = await setupOtc();
 
     const listing = await otc.createListing({
-      sellerId: bob.id, assetId: asset.id, quantity: 60, pricePerUnit: 50,
+      sellerId: bob.id, assetId: asset.id, quantity: 60, pricePerUnit: 5_000,
     });
     expect(listing.status).toBe("ACTIVE");
     await expectInvariants();
@@ -163,7 +163,7 @@ describe("OTC 挂牌 — 资金守恒不变量", () => {
 
     // 可用持仓只剩 40,再挂 50 必须被拒且状态不变
     await expect(
-      otc.createListing({ sellerId: bob.id, assetId: asset.id, quantity: 50, pricePerUnit: 50 }),
+      otc.createListing({ sellerId: bob.id, assetId: asset.id, quantity: 50, pricePerUnit: 5_000 }),
     ).rejects.toThrow(otc.OtcError);
     await expectInvariants();
   });
@@ -172,19 +172,19 @@ describe("OTC 挂牌 — 资金守恒不变量", () => {
     const { asset, alice, bob } = await setupOtc();
 
     const listing = await otc.createListing({
-      sellerId: bob.id, assetId: asset.id, quantity: 60, pricePerUnit: 50,
+      sellerId: bob.id, assetId: asset.id, quantity: 60, pricePerUnit: 5_000,
     });
     await expectInvariants();
 
     const deal1 = await otc.buyListing(alice.id, listing.id, 20);
-    expect(deal1).toMatchObject({ quantity: 20, price: 50 });
-    expect(deal1.total).toBeCloseTo(1_000, 2);
+    expect(deal1).toMatchObject({ quantity: 20, price: 5_000 });
+    expect(deal1.total).toBe(100_000);
     await expectInvariants();
 
     const aliceMid = await prisma.user.findUniqueOrThrow({ where: { id: alice.id } });
-    expect(aliceMid.cashBalance).toBeCloseTo(49_000, 2);
+    expect(Number(aliceMid.cashBalance)).toBe(4_900_000);
     const bobMid = await prisma.user.findUniqueOrThrow({ where: { id: bob.id } });
-    expect(bobMid.cashBalance).toBeCloseTo(11_000, 2);
+    expect(Number(bobMid.cashBalance)).toBe(1_100_000);
     const listingMid = await prisma.otcListing.findUniqueOrThrow({ where: { id: listing.id } });
     expect(listingMid).toMatchObject({ status: "ACTIVE", quantity: 40 });
 
@@ -203,7 +203,7 @@ describe("OTC 挂牌 — 资金守恒不变量", () => {
     });
     expect(aliceHolding.quantity).toBe(60);
     const assetAfter = await prisma.asset.findUniqueOrThrow({ where: { id: asset.id } });
-    expect(assetAfter.lastPrice).toBe(50); // OTC 成交也刷新参考价
+    expect(assetAfter.lastPrice).toBe(5_000); // OTC 成交也刷新参考价
 
     // 已 SOLD 的挂牌不可再买
     await expect(otc.buyListing(alice.id, listing.id, 1)).rejects.toThrow(otc.OtcError);
@@ -214,7 +214,7 @@ describe("OTC 挂牌 — 资金守恒不变量", () => {
     const { asset, alice, bob } = await setupOtc();
 
     const listing = await otc.createListing({
-      sellerId: bob.id, assetId: asset.id, quantity: 15, pricePerUnit: 100, minQuantity: 10,
+      sellerId: bob.id, assetId: asset.id, quantity: 15, pricePerUnit: 10_000, minQuantity: 10,
     });
 
     await expect(otc.buyListing(alice.id, listing.id, 5)).rejects.toThrow(otc.OtcError);
@@ -234,7 +234,7 @@ describe("OTC 挂牌 — 资金守恒不变量", () => {
     const { asset, alice, bob } = await setupOtc();
 
     const listing = await otc.createListing({
-      sellerId: bob.id, assetId: asset.id, quantity: 30, pricePerUnit: 50,
+      sellerId: bob.id, assetId: asset.id, quantity: 30, pricePerUnit: 5_000,
     });
     await expectInvariants();
 
@@ -262,21 +262,21 @@ describe("OTC 挂牌 — 资金守恒不变量", () => {
 
     // 挂牌参数非法
     await expect(
-      otc.createListing({ sellerId: bob.id, assetId: asset.id, quantity: 0, pricePerUnit: 50 }),
+      otc.createListing({ sellerId: bob.id, assetId: asset.id, quantity: 0, pricePerUnit: 5_000 }),
     ).rejects.toThrow(otc.OtcError);
     await expect(
       otc.createListing({ sellerId: bob.id, assetId: asset.id, quantity: 10, pricePerUnit: 0 }),
     ).rejects.toThrow(otc.OtcError);
     await expect(
-      otc.createListing({ sellerId: bob.id, assetId: asset.id, quantity: 10, pricePerUnit: 50, minQuantity: 20 }),
+      otc.createListing({ sellerId: bob.id, assetId: asset.id, quantity: 10, pricePerUnit: 5_000, minQuantity: 20 }),
     ).rejects.toThrow(otc.OtcError);
     // alice 无持仓不能挂牌
     await expect(
-      otc.createListing({ sellerId: alice.id, assetId: asset.id, quantity: 1, pricePerUnit: 50 }),
+      otc.createListing({ sellerId: alice.id, assetId: asset.id, quantity: 1, pricePerUnit: 5_000 }),
     ).rejects.toThrow(otc.OtcError);
 
     const listing = await otc.createListing({
-      sellerId: bob.id, assetId: asset.id, quantity: 20, pricePerUnit: 100,
+      sellerId: bob.id, assetId: asset.id, quantity: 20, pricePerUnit: 10_000,
     });
     await expectInvariants();
 
@@ -284,7 +284,7 @@ describe("OTC 挂牌 — 资金守恒不变量", () => {
     await expect(otc.buyListing(bob.id, listing.id, 5)).rejects.toThrow(otc.OtcError);
     await expect(otc.buyListing(alice.id, listing.id, 0)).rejects.toThrow(otc.OtcError);
     await expect(otc.buyListing(alice.id, listing.id, 25)).rejects.toThrow(otc.OtcError);
-    const dave = await fundUser("dave", 50);
+    const dave = await fundUser("dave", 5_000);
     await expect(otc.buyListing(dave.id, listing.id, 10)).rejects.toThrow(otc.OtcError);
 
     // 全部被拒后,冻结与余量必须原封不动
@@ -292,5 +292,19 @@ describe("OTC 挂牌 — 资金守恒不变量", () => {
     const listingAfter = await prisma.otcListing.findUniqueOrThrow({ where: { id: listing.id } });
     expect(listingAfter).toMatchObject({ status: "ACTIVE", quantity: 20 });
     expect(await prisma.otcDeal.count()).toBe(0);
+  });
+
+  it("价格必须是整数分", async () => {
+    const { asset, bob } = await setupOtc();
+    await expect(
+      otc.createListing({ sellerId: bob.id, assetId: asset.id, quantity: 1, pricePerUnit: 100.5 }),
+    ).rejects.toThrow(/integer/i);
+  });
+
+  it("超过单笔名义额上限拒单", async () => {
+    const { asset, bob } = await setupOtc();
+    await expect(
+      otc.createListing({ sellerId: bob.id, assetId: asset.id, quantity: 11, pricePerUnit: 100_000_000 }),
+    ).rejects.toThrow(/notional/i);
   });
 });

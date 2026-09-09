@@ -287,7 +287,7 @@ export function PixelMorphEntry() {
     const canTear = !reduced && !low;
     return (
       <Link
-        href="/rating"
+        href="/observatory/rating"
         aria-label={tx.aria}
         onClick={
           canTear
@@ -371,7 +371,7 @@ export function PixelMorphEntry() {
   if (reduced || low) {
     return (
       <Link
-        href="/rating"
+        href="/observatory/rating"
         aria-label={tx.aria}
         className={`group block w-full max-w-2xl mx-auto rounded-3xl border border-border bg-gradient-to-b ${cGrad} to-transparent shadow-soft hover:shadow-card ${cBorderHover} transition-all duration-300 px-6 py-9 text-center`}
       >
@@ -386,7 +386,7 @@ export function PixelMorphEntry() {
 
   return (
     <Link
-      href="/rating"
+      href="/observatory/rating"
       onClick={onClick}
       aria-label={tx.aria}
       className={`group relative block w-full max-w-2xl mx-auto rounded-3xl border border-border bg-gradient-to-b ${cGrad} to-transparent shadow-soft hover:shadow-card ${cBorderHover} transition-all duration-300 cursor-pointer px-6 pt-5 pb-5`}

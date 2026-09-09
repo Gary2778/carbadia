@@ -28,6 +28,7 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
     "Helvetica Neue", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  --font-serif: Georgia, "Times New Roman", "Songti SC", "STSong", "Noto Serif CJK SC", serif;
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -16px rgba(0, 0, 0, 0.12);
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.03), 0 4px 14px -8px rgba(0, 0, 0, 0.08);
 }
@@ -213,21 +214,6 @@ html[data-theme="dark"] body {
   animation: carbadia-shoot 9s ease-in infinite;
 }
 
-/* ── 主题切换按钮:呼吸灯(柔和脉冲光晕),引导用户发现明/暗切换 ── */
-@keyframes carbadia-breathe {
-  0%,
-  100% {
-    box-shadow: 0 0 0 1px var(--tg-ring, transparent), 0 0 4px 0 var(--tg-glow, transparent);
-  }
-  50% {
-    box-shadow: 0 0 0 1px var(--tg-ring, transparent), 0 0 16px 4px var(--tg-glow, transparent);
-  }
-}
-
-.carbadia-theme-toggle {
-  animation: carbadia-breathe 2.6s ease-in-out infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .carbadia-star {
     animation: none !important;
@@ -238,9 +224,16 @@ html[data-theme="dark"] body {
     animation: none !important;
     opacity: 0.85;
   }
-  /* 减弱动效时:呼吸灯不脉冲,但保留一圈静态光晕,仍然醒目 */
-  .carbadia-theme-toggle {
-    animation: none !important;
-    box-shadow: 0 0 0 1px var(--tg-ring, transparent), 0 0 10px 1px var(--tg-glow, transparent);
-  }
 }
+
+/* Observatory 文章正文(marked 输出的原生 HTML) */
+.article-body { font-family: var(--font-serif); line-height: 1.85; }
+.article-body h2, .article-body h3 { font-weight: 600; letter-spacing: -0.01em; margin: 1.6em 0 0.6em; }
+.article-body h2 { font-size: 1.5rem; }
+.article-body h3 { font-size: 1.25rem; }
+.article-body p { margin: 0.9em 0; }
+.article-body a { color: var(--accent); text-decoration: underline; }
+.article-body table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 1.2em 0; font-family: var(--font-sans); }
+.article-body th, .article-body td { border-bottom: 1px solid var(--border); padding: 0.5em 0.75em; text-align: start; }
+.article-body blockquote { border-inline-start: 2px solid var(--border); padding-inline-start: 1em; color: var(--muted); margin: 1.2em 0; }
+.article-body strong { font-weight: 600; }

@@ -1,0 +1,299 @@
+.cardIntro {
+  min-height: 7.5rem;
+}
+
+.marketRow {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, 1fr) minmax(3rem, 4.25rem) auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.marketSymbol,
+.marketChart,
+.marketPrice {
+  min-width: 0;
+}
+
+.studioCard,
+.proCard {
+  isolation: isolate;
+}
+
+.studioStage {
+  position: relative;
+  min-height: 9rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+}
+
+.stageHeader {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+}
+
+.studioFlow {
+  position: absolute;
+  inset: 3.25rem 0.75rem 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.studioFlowItem {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+}
+
+.studioModule {
+  display: flex;
+  min-width: 0;
+  min-height: 4rem;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, var(--accent));
+  border-radius: 0.72rem;
+  background: color-mix(in srgb, var(--surface) 95%, var(--accent));
+  padding: 0.58rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.studioModule span {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.48rem;
+  letter-spacing: 0.07em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studioModule strong {
+  margin-top: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 650;
+  line-height: 1.1;
+}
+
+.studioLink {
+  position: relative;
+  width: 0.9rem;
+  height: 1px;
+  flex: 0 0 0.9rem;
+  background: color-mix(in srgb, var(--accent) 54%, var(--border));
+}
+
+.studioLink::after {
+  position: absolute;
+  inset: 50% -1px auto auto;
+  width: 0.28rem;
+  height: 0.28rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--surface);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.proVisual {
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 78%, transparent);
+}
+
+.sourceGrid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding-bottom: 2.15rem;
+}
+
+.sourceGrid::after {
+  position: absolute;
+  inset: auto 16.66% 1rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--accent) 46%, var(--border));
+  content: "";
+}
+
+.sourceCard {
+  position: relative;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.72rem;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  padding: 0.78rem 0.62rem;
+  text-align: center;
+}
+
+.sourceCard::after {
+  position: absolute;
+  inset: 100% 50% auto auto;
+  width: 1px;
+  height: 1.2rem;
+  background: color-mix(in srgb, var(--accent) 46%, var(--border));
+  content: "";
+}
+
+.sourceName {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 0.67rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace {
+  position: relative;
+  max-width: 28rem;
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: var(--shadow-card);
+}
+
+.workspace::before {
+  position: absolute;
+  inset: -1.2rem auto auto 50%;
+  width: 1px;
+  height: 1.2rem;
+  background: color-mix(in srgb, var(--accent) 46%, var(--border));
+  content: "";
+}
+
+.workspaceHeader {
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+}
+
+.workspaceHeaderTitle {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.workspaceMark {
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+}
+
+.workspaceState {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  .proVisual {
+    border-top: 0;
+    border-inline-start: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 420px) {
+  .studioFlow {
+    inset-inline: 0.55rem;
+  }
+
+  .studioModule {
+    padding: 0.48rem;
+  }
+
+  .studioLink {
+    width: 0.55rem;
+    flex-basis: 0.55rem;
+  }
+
+  .sourceGrid {
+    gap: 0.35rem;
+  }
+
+  .sourceCard {
+    padding-inline: 0.35rem;
+  }
+
+  .sourceName {
+    font-size: 0.61rem;
+  }
+
+  .workspaceHeader {
+    gap: 0.55rem;
+    padding-inline: 0.75rem;
+  }
+
+  .workspaceState {
+    font-size: 0.45rem;
+    letter-spacing: 0.03em;
+  }
+}
+
+@media (max-width: 359px) {
+  .marketRow {
+    min-height: 2.5rem;
+    grid-template-columns: minmax(0, 1fr) minmax(3rem, 3.75rem) minmax(0, max-content);
+    grid-template-rows: repeat(2, minmax(0, auto));
+    column-gap: 0.45rem;
+    row-gap: 0.15rem;
+  }
+
+  .marketSymbol,
+  .marketChart {
+    grid-row: 1 / 3;
+  }
+
+  .marketChart {
+    grid-column: 2;
+  }
+
+  .marketPrice {
+    grid-column: 3;
+    grid-row: 1;
+    overflow: hidden;
+    font-size: 0.78rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .marketChange {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+  }
+}

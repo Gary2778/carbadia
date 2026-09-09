@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useLang, useT } from "@/lib/i18n";
-import { LANGS, LANG_META } from "@/i18n/config";
+import { LANGS, LANG_META, ZH_PORTAL } from "@/i18n/config";
 
-// 16 语下拉切换器:按 LANGS 定序(English 置顶,欧语 A–Z,日韩、阿拉伯语,简繁中文垫底),
+// 15 语下拉切换器:按 LANGS 定序(English 置顶,欧语 A–Z,日韩、阿拉伯语,繁中垫底),
 // 菜单项用本语言原名(endonym),当前项打勾。桌面/移动共用,点击外部或 Esc 关闭。
+// 菜单最底部是"简体中文 ↗"外链——简中不是站内语言,是通往中文站 carbadia.co 的门。
 export function LanguageToggle() {
   const { lang, setLang } = useLang();
   const t = useT("nav");
@@ -87,6 +88,21 @@ export function LanguageToggle() {
                 </li>
               );
             })}
+            {/* 找简体中文的人会翻到这里:给一扇标着外链的门,而不是让 ta 以为没有中文 */}
+            <li role="presentation" aria-hidden className="mx-2 my-1.5 border-t border-border" />
+            <li role="option" aria-selected={false}>
+              <a
+                href={ZH_PORTAL.href}
+                lang={ZH_PORTAL.htmlLang}
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm text-start text-muted hover:text-foreground hover:bg-surface-2/60 transition-colors min-h-[38px]"
+              >
+                <span className="whitespace-nowrap">{ZH_PORTAL.label}</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0">
+                  <path d="M7 17 17 7M9 7h8v8" />
+                </svg>
+              </a>
+            </li>
           </motion.ul>
         )}
       </AnimatePresence>

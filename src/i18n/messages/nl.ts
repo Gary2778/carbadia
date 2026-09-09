@@ -8,6 +8,11 @@ const nl: Messages = {
     rating: "CCRC",
     ratingFull: "Carbon Credit Rating Connoisseur",
     portfolio: "Portefeuille",
+    zoneExchange: "Beurs",
+    zoneObservatory: "Observatorium",
+    obsOverview: "Overzicht",
+    obsData: "Data",
+    obsArticles: "Artikelen",
     cash: "Beschikbaar saldo",
     logout: "Uitloggen",
     login: "Inloggen",
@@ -17,14 +22,27 @@ const nl: Messages = {
   },
 
   home: {
-    kicker: "Carbadia · Beurs voor koolstofkredieten · Demo",
+    kicker: "Carbadia · Koolstofmarkten · Demo",
     heroLines: ["Een eerlijke prijs voor", "elke ton koolstof"],
     heroSubtitle:
-      "Een koolstofmarktsimulator met een echte orderboek-engine — oefen met gestandaardiseerde spot- en OTC-blocktransacties met $100,000 aan demogeld. Geen echt geld, geen echte koolstof.",
-    startTrading: "Begin met handelen",
-    browseOtc: "Bekijk OTC →",
+      "Twee ingangen: een koolstofmarktsimulator met een echte orderboek-engine, en een observatorium dat de echte markt volgt — registerdata, annuleringen en ons tijdschrift.",
+    loading: "Laden…",
+    exCardTitle: "Gesimuleerde beurs",
+    exCardDesc: "Oefen met gestandaardiseerde spot- en OTC-blocktransacties met $100,000 aan demogeld. Geen echt geld, geen echte koolstof.",
+    exCardCta: "Naar de beurs →",
+    exCardMeta: "Nu het actiefst",
+    obCardTitle: "Marktobservatorium",
+    obCardDesc: "Echte registerdata, annuleringsranglijsten, CCRC-ratings — en het Carbadia Observatory-tijdschrift.",
+    obCardCta: "Naar het observatorium →",
+    obCardLatest: "Laatste editie",
+    obCardNoIssue: "Eerste editie in voorbereiding",
+    obCardRating: "CCRC-ratingmethode",
+  },
+
+  exchange: {
     spotMarket: "Spotmarkt",
     instrumentsMeta: (n: number) => `${n} instrumenten · live demodata`,
+    spotEmpty: "Nog geen instrumenten genoteerd.",
     loading: "Laden…",
     thSymbolProject: "Symbool / Project",
     thStandard: "Standaard",
@@ -33,6 +51,25 @@ const nl: Messages = {
     thTrend24h: "24u trend",
     thBidAsk: "Bied / Laat",
     thVolume24h: "24u volume (t)",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "Veldnotities en live data van 's werelds koolstofmarkten",
+    latestIssue: "Laatste editie",
+    readIssue: "Lees deze editie →",
+    noArticles: "Eerste editie in voorbereiding.",
+    dataCta: "Open de databrowser →",
+    issueN: (n: number) => `Editie ${n}`,
+  },
+
+  articles: {
+    title: "Artikelen",
+    subtitle: "Het Carbadia Observatory-tijdschrift · Engelse editie",
+    empty: "Nog geen edities gepubliceerd.",
+    back: "← Alle artikelen",
+    issueN: (n: number) => `Editie ${n}`,
+    disclaimer: "Dit tijdschrift is uitsluitend bedoeld ter informatie en educatie. Niets hierin is beleggingsadvies.",
   },
 
   market: {
@@ -44,6 +81,9 @@ const nl: Messages = {
     vintage: "Vintage",
     region: "Regio",
     registry: "Register",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "Candles",
     depth: "Diepte",
     intervals: { "1m": "1m", "5m": "5m", "1h": "1u", "1d": "1d" },
@@ -77,6 +117,9 @@ const nl: Messages = {
     available: "Beschikbaar",
     max: "Max",
     estTotal: "Geschat totaal",
+    qtyInvalid: "Voer een geheel getal van minimaal 1 in.",
+    qtyOverAvailable: "Overschrijdt je beschikbare positie.",
+    depthShort: "Onvoldoende diepte in het orderboek voor deze omvang.",
     submitting: "Verzenden…",
     submitted: "Verzonden",
     cancel: "Annuleren",
@@ -282,6 +325,49 @@ const nl: Messages = {
     toDark: "Schakel naar donkere modus",
   },
 
+  // 过渡约定: 先填英文原文, 待翻译(en.ts 为 source of truth)
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   data: {
     assetNames: {
       "VCS-FOR-2021": "Bosbeheer-koolstofput Yunnan",
@@ -290,6 +376,8 @@ const nl: Messages = {
       "GS-MANG-2022": "Mangroveherstel blauwe koolstof, Indonesië",
       "VCS-COOK-2020": "Efficiënte kooktoestellen Kenia",
       "CDM-METH-2019": "Stortgasafvang Brazilië",
+      "CEA-SCEN-2026": "Emissierechten-scenario Chinese nationale koolstofmarkt (CEA)",
+      "CCER-SCEN-2026": "CCER-marktindex-scenario",
     } as Record<string, string>,
     projectTypes: {
       forestry: "Bosbouw",
@@ -297,6 +385,7 @@ const nl: Messages = {
       blueCarbon: "Blauwe koolstof",
       efficiency: "Efficiëntie",
       methane: "Methaanafvang",
+      allowanceScenario: "Emissierechten-scenario",
     },
     countries: {
       china: "China",
@@ -307,6 +396,7 @@ const nl: Messages = {
     },
     registries: {
       ccer: "Chinees CCER-register",
+      scenario: "Scenario-instrument (geen echt register)",
     },
     roles: {
       carbonDeveloper: "Koolstofontwikkelaar",

@@ -11,13 +11,17 @@ export async function POST(req: Request) {
       return fail("Too many requests, please retry later", 429);
     }
     const tag = randomBytes(4).toString("hex");
-    const user = await prisma.user.create({
-      data: {
-        email: `guest-${tag}@demo.carbadia.io`,
-        name: "Guest",
-        passwordHash: hashPassword(randomBytes(16).toString("hex")), // 不可猜、不外发:账号只活在本次会话里
-        cashBalance: 100000,
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          email: `guest-${tag}@demo.carbadia.io`,
+          name: "Guest",
+          passwordHash: hashPassword(randomBytes(16).toString("hex")), // 不可猜、不外发:账号只活在本次会话里
+          cashBalance: BigInt(10_000_000), // 赠金 $100,000(整数分)
+        },
+      });
+      await tx.ledgerEntry.create({ data: { userId: u.id, account: "CASH", delta: BigInt(10_000_000), reason: "GRANT" } });
+      return u;
     });
     await createSession(user.id);
     void prisma.event.create({ data: { name: "demo_login" } }).catch(() => {});

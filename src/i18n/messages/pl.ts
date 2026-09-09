@@ -8,6 +8,11 @@ const pl: Messages = {
     rating: "CCRC",
     ratingFull: "Koneser ratingów kredytów węglowych",
     portfolio: "Portfel",
+    zoneExchange: "Giełda",
+    zoneObservatory: "Obserwatorium",
+    obsOverview: "Przegląd",
+    obsData: "Dane",
+    obsArticles: "Artykuły",
     cash: "Dostępne środki",
     logout: "Wyloguj",
     login: "Zaloguj",
@@ -17,14 +22,27 @@ const pl: Messages = {
   },
 
   home: {
-    kicker: "Carbadia · Giełda kredytów węglowych · Demo",
+    kicker: "Carbadia · Rynki węglowe · Demo",
     heroLines: ["Uczciwa cena", "za każdą tonę CO₂"],
     heroSubtitle:
-      "Symulator rynku węglowego z prawdziwym silnikiem arkusza zleceń — ćwicz standaryzowany handel spot oraz transakcje blokowe OTC z $100,000 środków demo. Bez prawdziwych pieniędzy, bez prawdziwego węgla.",
-    startTrading: "Zacznij handlować",
-    browseOtc: "Przeglądaj OTC →",
+      "Dwie drogi wejścia: symulator rynku węglowego z prawdziwym silnikiem arkusza zleceń oraz obserwatorium śledzące prawdziwy rynek — dane rejestrowe, umorzenia jednostek i nasze czasopismo.",
+    loading: "Ładowanie…",
+    exCardTitle: "Symulowana giełda",
+    exCardDesc: "Ćwicz standaryzowany handel spot oraz transakcje blokowe OTC z $100,000 środków demo. Bez prawdziwych pieniędzy, bez prawdziwego węgla.",
+    exCardCta: "Wejdź na giełdę →",
+    exCardMeta: "Obecnie najaktywniejszy",
+    obCardTitle: "Obserwatorium rynku",
+    obCardDesc: "Prawdziwe dane rejestrowe, rankingi umorzeń, ratingi CCRC — oraz czasopismo Carbadia Observatory.",
+    obCardCta: "Wejdź do obserwatorium →",
+    obCardLatest: "Najnowszy numer",
+    obCardNoIssue: "Pierwszy numer w przygotowaniu",
+    obCardRating: "Metoda ratingu CCRC",
+  },
+
+  exchange: {
     spotMarket: "Rynek spot",
     instrumentsMeta: (n: number) => `Instrumenty: ${n} · dane demo na żywo`,
+    spotEmpty: "Brak notowanych instrumentów.",
     loading: "Ładowanie…",
     thSymbolProject: "Symbol / projekt",
     thStandard: "Standard",
@@ -33,6 +51,25 @@ const pl: Messages = {
     thTrend24h: "Trend 24h",
     thBidAsk: "Bid / Ask",
     thVolume24h: "Wolumen 24h (t)",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "Notatki terenowe i dane na żywo ze światowych rynków węglowych",
+    latestIssue: "Najnowszy numer",
+    readIssue: "Czytaj ten numer →",
+    noArticles: "Pierwszy numer w przygotowaniu.",
+    dataCta: "Otwórz przeglądarkę danych →",
+    issueN: (n: number) => `Numer ${n}`,
+  },
+
+  articles: {
+    title: "Artykuły",
+    subtitle: "Czasopismo Carbadia Observatory · wydanie angielskie",
+    empty: "Nie opublikowano jeszcze żadnego numeru.",
+    back: "← Wszystkie artykuły",
+    issueN: (n: number) => `Numer ${n}`,
+    disclaimer: "To czasopismo służy wyłącznie celom informacyjnym i edukacyjnym. Nic tu zawarte nie stanowi porady inwestycyjnej.",
   },
 
   market: {
@@ -44,6 +81,9 @@ const pl: Messages = {
     vintage: "Rocznik",
     region: "Region",
     registry: "Rejestr",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "Świece",
     depth: "Głębokość",
     intervals: { "1m": "1m", "5m": "5m", "1h": "1h", "1d": "1d" },
@@ -77,6 +117,9 @@ const pl: Messages = {
     available: "Dostępne",
     max: "Maks.",
     estTotal: "Szac. wartość",
+    qtyInvalid: "Podaj liczbę całkowitą co najmniej 1.",
+    qtyOverAvailable: "Przekracza dostępne saldo pozycji.",
+    depthShort: "Zbyt mała głębokość arkusza dla tej wielkości.",
     submitting: "Wysyłanie…",
     submitted: "Wysłano",
     cancel: "Anuluj",
@@ -282,6 +325,49 @@ const pl: Messages = {
     toDark: "Przełącz na tryb ciemny",
   },
 
+  // 过渡约定: 先填英文原文, 待翻译(en.ts 为 source of truth)
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   data: {
     assetNames: {
       "VCS-FOR-2021": "Gospodarka leśna i pochłanianie CO₂ w Junnanie",
@@ -290,6 +376,8 @@ const pl: Messages = {
       "GS-MANG-2022": "Odtwarzanie namorzynów w Indonezji — błękitny węgiel",
       "VCS-COOK-2020": "Energooszczędne kuchenki w Kenii",
       "CDM-METH-2019": "Odzysk gazu składowiskowego w Brazylii",
+      "CEA-SCEN-2026": "Scenariusz uprawnień chińskiego krajowego rynku emisji (CEA)",
+      "CCER-SCEN-2026": "Scenariusz indeksu rynku CCER",
     } as Record<string, string>,
     projectTypes: {
       forestry: "Pochłanianie leśne",
@@ -297,6 +385,7 @@ const pl: Messages = {
       blueCarbon: "Błękitny węgiel",
       efficiency: "Efektywność",
       methane: "Wychwyt metanu",
+      allowanceScenario: "Scenariusz uprawnień",
     },
     countries: {
       china: "Chiny",
@@ -307,6 +396,7 @@ const pl: Messages = {
     },
     registries: {
       ccer: "Chiński rejestr CCER",
+      scenario: "Instrument scenariuszowy (brak rzeczywistego rejestru)",
     },
     roles: {
       carbonDeveloper: "Deweloper projektów węglowych",

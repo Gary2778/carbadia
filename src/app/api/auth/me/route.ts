@@ -9,8 +9,8 @@ export async function GET() {
       id: user.id,
       email: user.email,
       name: user.name,
-      cashBalance: user.cashBalance,
-      lockedCash: user.lockedCash,
+      cashBalance: Number(user.cashBalance), // BigInt → number, 否则 JSON 序列化 throw
+      lockedCash: Number(user.lockedCash),
     });
   } catch (err) {
     return handle(err);

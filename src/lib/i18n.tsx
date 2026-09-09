@@ -22,7 +22,17 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
 
   // 挂载后读取已保存的偏好（SSR 始终按默认英文渲染，避免水合不一致）
   useEffect(() => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    let saved = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    // 简中已下架(内容迁往 carbadia.co):历史偏好 zh 回退到最接近的繁中并改写存储,
+    // 别让老用户毫无征兆地掉回英文
+    if (saved === "zh") {
+      saved = "zh-TW";
+      try {
+        localStorage.setItem(STORAGE_KEY, saved);
+      } catch {
+        /* ignore */
+      }
+    }
     if (isLang(saved) && saved !== DEFAULT_LANG) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- 水合安全模式:SSR 按默认英文渲染,挂载后才能读 localStorage 纠正
       setLangState(saved);

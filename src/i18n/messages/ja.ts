@@ -8,6 +8,11 @@ const ja: Messages = {
     rating: "CCRC",
     ratingFull: "カーボンクレジット格付け鑑定士",
     portfolio: "ポートフォリオ",
+    zoneExchange: "取引所",
+    zoneObservatory: "観測所",
+    obsOverview: "概要",
+    obsData: "データ",
+    obsArticles: "記事",
     cash: "買付余力",
     logout: "ログアウト",
     login: "ログイン",
@@ -17,14 +22,27 @@ const ja: Messages = {
   },
 
   home: {
-    kicker: "Carbadia · カーボンクレジット取引所 · デモ",
+    kicker: "Carbadia · カーボン市場 · デモ",
     heroLines: ["すべての炭素1トンに", "公正な価格を"],
     heroSubtitle:
-      "本物の板寄せエンジンを備えたカーボン市場シミュレーター — $100,000 のデモ資金で、標準化された現物取引とOTC大口取引を練習できます。実際の資金も実際のカーボンも扱いません。",
-    startTrading: "取引を始める",
-    browseOtc: "OTCを見る →",
+      "入り口は2つ — 本物の板寄せエンジンを備えたカーボン市場シミュレーターと、実際の市場を追う観測所。レジストリデータ、クレジット無効化の動き、そして私たちのジャーナルをお届けします。",
+    loading: "読み込み中…",
+    exCardTitle: "模擬取引所",
+    exCardDesc: "$100,000 のデモ資金で、標準化された現物取引とOTC大口取引を練習できます。実際の資金も実際のカーボンも扱いません。",
+    exCardCta: "取引所へ →",
+    exCardMeta: "現在最も活発",
+    obCardTitle: "マーケット観測所",
+    obCardDesc: "実際のレジストリデータ、無効化ランキング、CCRC格付け — そしてCarbadia Observatoryジャーナル。",
+    obCardCta: "観測所へ →",
+    obCardLatest: "最新号",
+    obCardNoIssue: "創刊号を準備中です",
+    obCardRating: "CCRC格付け手法",
+  },
+
+  exchange: {
     spotMarket: "現物市場",
     instrumentsMeta: (n: number) => `${n} 銘柄 · ライブデモデータ`,
+    spotEmpty: "上場銘柄はまだありません。",
     loading: "読み込み中…",
     thSymbolProject: "銘柄 / プロジェクト",
     thStandard: "認証基準",
@@ -33,6 +51,25 @@ const ja: Messages = {
     thTrend24h: "24hトレンド",
     thBidAsk: "買気配 / 売気配",
     thVolume24h: "24h出来高(t)",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "世界のカーボン市場からのフィールドノートとライブデータ",
+    latestIssue: "最新号",
+    readIssue: "この号を読む →",
+    noArticles: "創刊号を準備中です。",
+    dataCta: "データブラウザを開く →",
+    issueN: (n: number) => `第${n}号`,
+  },
+
+  articles: {
+    title: "記事",
+    subtitle: "Carbadia Observatoryジャーナル · 英語版",
+    empty: "まだ号が公開されていません。",
+    back: "← すべての記事",
+    issueN: (n: number) => `第${n}号`,
+    disclaimer: "本ジャーナルは情報提供および教育目的のみを目的としています。投資助言ではありません。",
   },
 
   market: {
@@ -44,6 +81,9 @@ const ja: Messages = {
     vintage: "ビンテージ",
     region: "地域",
     registry: "登録簿",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "ローソク足",
     depth: "デプス",
     intervals: { "1m": "1分", "5m": "5分", "1h": "1時間", "1d": "1日" },
@@ -77,6 +117,9 @@ const ja: Messages = {
     available: "利用可能",
     max: "最大",
     estTotal: "概算合計",
+    qtyInvalid: "1以上の整数を入力してください。",
+    qtyOverAvailable: "利用可能な保有量を超えています。",
+    depthShort: "この数量に対して板の厚みが不足しています。",
     submitting: "発注中…",
     submitted: "発注済み",
     cancel: "取消",
@@ -282,6 +325,49 @@ const ja: Messages = {
     toDark: "ダークモードに切り替え",
   },
 
+  // 过渡约定: 先填英文原文, 待翻译(en.ts 为 source of truth)
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   data: {
     assetNames: {
       "VCS-FOR-2021": "雲南省 森林経営カーボンシンク",
@@ -290,6 +376,8 @@ const ja: Messages = {
       "GS-MANG-2022": "インドネシア マングローブ・ブルーカーボン再生",
       "VCS-COOK-2020": "ケニア 高効率クックストーブ",
       "CDM-METH-2019": "ブラジル 埋立地ガス回収",
+      "CEA-SCEN-2026": "中国全国炭素市場排出枠シナリオ(CEA)",
+      "CCER-SCEN-2026": "CCER 市場指数シナリオ",
     } as Record<string, string>,
     projectTypes: {
       forestry: "森林吸収",
@@ -297,6 +385,7 @@ const ja: Messages = {
       blueCarbon: "ブルーカーボン",
       efficiency: "省エネ",
       methane: "メタン回収",
+      allowanceScenario: "排出枠シナリオ",
     },
     countries: {
       china: "中国",
@@ -307,6 +396,7 @@ const ja: Messages = {
     },
     registries: {
       ccer: "中国CCER登録簿",
+      scenario: "シナリオ銘柄(実在の登録簿なし)",
     },
     roles: {
       carbonDeveloper: "カーボン開発事業者",

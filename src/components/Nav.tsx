@@ -15,18 +15,42 @@ import { tUserName } from "@/lib/data-i18n";
 
 type Me = { id: string; name: string; email: string; cashBalance: number; lockedCash: number } | null;
 
-type LinkKey = "markets" | "otc" | "rating" | "portfolio";
-const LINKS: { href: string; key: LinkKey }[] = [
-  { href: "/", key: "markets" },
-  { href: "/otc", key: "otc" },
-  { href: "/rating", key: "rating" },
-  { href: "/portfolio", key: "portfolio" },
-];
+type LinkKey = "markets" | "otc" | "portfolio" | "obsOverview" | "obsData" | "rating" | "obsArticles";
+type Zone = "exchange" | "observatory" | "studio";
+const ZONE_LINKS: Record<Zone, { href: string; key: LinkKey }[]> = {
+  exchange: [
+    { href: "/exchange", key: "markets" },
+    { href: "/exchange/otc", key: "otc" },
+    { href: "/exchange/portfolio", key: "portfolio" },
+  ],
+  observatory: [
+    { href: "/observatory", key: "obsOverview" },
+    { href: "/observatory/data", key: "obsData" },
+    { href: "/observatory/rating", key: "rating" },
+    { href: "/observatory/articles", key: "obsArticles" },
+  ],
+  studio: [],
+};
+// 区落地页要求精确匹配,否则 /exchange 会在所有子页常亮;
+// 但行情详情页(/exchange/market/*)语义上仍属"行情",所以 /exchange 额外接受该前缀
+const isActive = (href: string, pathname: string) =>
+  href === "/exchange"
+    ? pathname === "/exchange" || ["market", "projects", "watchlist", "research", "learn"].some((page) => pathname.startsWith(`/exchange/${page}`))
+    : href === "/exchange/portfolio"
+      ? ["portfolio", "dashboard", "orders", "retirement", "transactions", "account"].some((page) => pathname.startsWith(`/exchange/${page}`))
+    : href === "/observatory"
+      ? pathname === href
+      : pathname.startsWith(href);
+const zoneOf = (pathname: string): Zone | null =>
+  pathname.startsWith("/exchange") ? "exchange" : pathname.startsWith("/observatory") ? "observatory" : pathname === "/studio" || pathname.startsWith("/studio/") ? "studio" : null;
 
-export function Nav() {
+export function Nav({ hasArticles }: { hasArticles: boolean }) {
   const t = useT("nav");
   const { lang } = useLang();
   const pathname = usePathname();
+  const zone = zoneOf(pathname);
+  // 一篇文章都没有时不挂文章入口 —— 空栏目不进导航。有了第一篇就自动出现。
+  const linksFor = (z: Zone) => ZONE_LINKS[z].filter((l) => l.key !== "obsArticles" || hasArticles);
   const router = useRouter();
   const [me, setMe] = useState<Me>(null);
   const [loaded, setLoaded] = useState(false);
@@ -97,43 +121,61 @@ export function Nav() {
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" onClick={() => setOpen(false)}>
           <span className="text-accent text-lg">🌿</span>
           <span>Carbadia</span>
-          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20">
+          <span className="hidden min-[360px]:inline-flex text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20">
             {t.demo}
           </span>
         </Link>
 
-        {/* 桌面:内联导航;手机隐藏,收进汉堡菜单 */}
-        <nav className="hidden md:flex items-center gap-1 text-sm">
-          {LINKS.map((l) => {
-            const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
-            return (
+        {/* 桌面:切换器 + 分区导航;手机隐藏,收进汉堡菜单 */}
+        <div className="hidden md:flex items-center gap-3 text-sm min-w-0">
+          {/* 常驻产品入口 */}
+          <div className="flex items-center rounded-full border border-border p-0.5 text-xs shrink-0">
+            {(["exchange", "observatory", "studio"] as const).map((z) => (
               <Link
-                key={l.href}
-                href={l.href}
-                title={l.key === "rating" ? t.ratingFull : undefined}
-                onClick={l.key === "rating" ? ccrcEffect : undefined}
-                className="relative px-3 py-1.5 rounded-full"
+                key={z}
+                href={`/${z}`}
+                aria-current={zone === z ? "page" : undefined}
+                className={`px-3 py-1 rounded-full transition-colors ${
+                  zone === z ? "bg-accent text-background font-medium" : "text-muted hover:text-foreground"
+                }`}
               >
-                {active && (
-                  <motion.span
-                    layoutId="nav-active"
-                    className="absolute inset-0 bg-surface-2 rounded-full"
-                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                  />
-                )}
-                <span className={`relative transition-colors ${active ? "text-foreground" : "text-muted hover:text-foreground"}`}>
-                  {t[l.key]}
-                </span>
+                {z === "exchange" ? t.zoneExchange : z === "observatory" ? t.zoneObservatory : "Studio"}
               </Link>
-            );
-          })}
-        </nav>
+            ))}
+          </div>
+          <nav className="hidden xl:flex items-center gap-1">
+            {(zone ? linksFor(zone) : []).map((l) => {
+              const active = isActive(l.href, pathname);
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  title={l.key === "rating" ? t.ratingFull : undefined}
+                  onClick={l.key === "rating" ? ccrcEffect : undefined}
+                  aria-current={active ? "page" : undefined}
+                  className="relative px-3 py-1.5 rounded-full"
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="nav-active"
+                      className="absolute inset-0 bg-surface-2 rounded-full"
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <span className={`relative transition-colors ${active ? "text-foreground" : "text-muted hover:text-foreground"}`}>
+                    {t[l.key]}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
         <div className="ms-auto flex items-center gap-2 sm:gap-3 text-sm">
           <ThemeToggle />
           <LanguageToggle />
           {/* 桌面:账户/登录区 */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-3">
             {!loaded ? null : me ? (
               <>
                 <div className="text-end hidden lg:block">
@@ -165,7 +207,7 @@ export function Nav() {
           {/* 手机:汉堡按钮(≥44px 触控目标) */}
           <button
             type="button"
-            className="md:hidden grid h-11 w-11 -me-1.5 place-items-center rounded-full text-foreground hover:bg-surface-2 transition-colors"
+            className="xl:hidden grid h-11 w-11 place-items-center rounded-full text-foreground hover:bg-surface-2 transition-colors"
             aria-label={t.menu}
             aria-expanded={open}
             onClick={() => setOpen((o) => !o)}
@@ -179,26 +221,35 @@ export function Nav() {
 
       {/* 手机:展开式菜单 */}
       {open && (
-        <nav className="md:hidden border-t border-border bg-surface px-4 py-2">
-          {LINKS.map((l) => {
-            const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={(e) => {
-                  setOpen(false);
-                  if (l.key === "rating") ccrcEffect(e);
-                }}
-                title={l.key === "rating" ? t.ratingFull : undefined}
-                className={`flex items-center min-h-[44px] px-3 rounded-xl text-base transition-colors ${
-                  active ? "bg-surface-2 text-foreground font-medium" : "text-muted hover:text-foreground"
-                }`}
-              >
-                {t[l.key]}
-              </Link>
-            );
-          })}
+        <nav className="xl:hidden border-t border-border bg-surface px-4 py-2">
+          {(["exchange", "observatory"] as const).map((z) => (
+            <div key={z}>
+              <div className="px-3 pt-2 pb-1 text-xs text-muted">{z === "exchange" ? t.zoneExchange : t.zoneObservatory}</div>
+              {linksFor(z).map((l) => {
+                const active = isActive(l.href, pathname);
+                return (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    onClick={(e) => {
+                      setOpen(false);
+                      if (l.key === "rating") ccrcEffect(e);
+                    }}
+                    title={l.key === "rating" ? t.ratingFull : undefined}
+                    aria-current={active ? "page" : undefined}
+                    className={`flex items-center min-h-[44px] px-3 rounded-xl text-base transition-colors ${
+                      active ? "bg-surface-2 text-foreground font-medium" : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    {t[l.key]}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+          <Link href="/studio" onClick={() => setOpen(false)} aria-current={zone === "studio" ? "page" : undefined} className={`flex min-h-[44px] items-center px-3 rounded-xl text-base ${zone === "studio" ? "bg-surface-2 text-foreground font-medium" : "text-muted hover:text-foreground"}`}>
+            Carbadia Studio
+          </Link>
           <div className="h-px bg-border my-2" />
           {!loaded ? null : me ? (
             <>

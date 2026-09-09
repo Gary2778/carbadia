@@ -1,25 +1,28 @@
 import { prisma } from "./db";
+import { MAX_NOTIONAL_CENTS, MAX_PRICE_CENTS } from "./limits";
+import { writeLedger } from "./ledger";
 
 export class OtcError extends Error {}
-
-const round2 = (x: number) => Math.round((x + Number.EPSILON) * 100) / 100;
 
 interface CreateListingInput {
   sellerId: string;
   assetId: string;
   quantity: number;
-  pricePerUnit: number;
+  pricePerUnit: number; // 整数分/吨
   minQuantity?: number;
 }
 
-/** 创建 OTC 挂牌: 冻结卖方对应持仓 */
+/** 创建 OTC 挂牌: 冻结卖方对应持仓。金额语义: 整数分。 */
 export async function createListing(input: CreateListingInput) {
   const quantity = Math.trunc(input.quantity);
-  const pricePerUnit = round2(input.pricePerUnit);
+  const pricePerUnit = input.pricePerUnit;
   const minQuantity = Math.max(1, Math.trunc(input.minQuantity ?? 1));
 
   if (quantity <= 0) throw new OtcError("Quantity must be a positive integer");
+  if (!Number.isInteger(pricePerUnit)) throw new OtcError("Unit price must be an integer amount in cents");
   if (pricePerUnit <= 0) throw new OtcError("Unit price must be greater than 0");
+  if (pricePerUnit > MAX_PRICE_CENTS) throw new OtcError("Unit price exceeds maximum");
+  if (pricePerUnit * quantity > MAX_NOTIONAL_CENTS) throw new OtcError("Listing notional exceeds maximum");
   if (minQuantity > quantity) throw new OtcError("Min buy cannot exceed listing quantity");
 
   return prisma.$transaction(async (tx) => {
@@ -34,7 +37,7 @@ export async function createListing(input: CreateListingInput) {
       data: { locked: { increment: quantity } },
     });
 
-    return tx.otcListing.create({
+    const listing = await tx.otcListing.create({
       data: {
         sellerId: input.sellerId,
         assetId: input.assetId,
@@ -43,6 +46,12 @@ export async function createListing(input: CreateListingInput) {
         minQuantity,
       },
     });
+
+    await writeLedger(tx, [
+      { userId: input.sellerId, account: "HOLDING_LOCKED", assetId: input.assetId, delta: quantity, reason: "OTC_LOCK", refType: "LISTING", refId: listing.id },
+    ]);
+
+    return listing;
   });
 }
 
@@ -58,6 +67,10 @@ export async function cancelListing(sellerId: string, listingId: string) {
       where: { userId_assetId: { userId: sellerId, assetId: listing.assetId } },
       data: { locked: { decrement: listing.quantity } },
     });
+
+    await writeLedger(tx, [
+      { userId: sellerId, account: "HOLDING_LOCKED", assetId: listing.assetId, delta: -listing.quantity, reason: "OTC_UNLOCK", refType: "LISTING", refId: listing.id },
+    ]);
 
     return tx.otcListing.update({ where: { id: listingId }, data: { status: "CANCELLED" } });
   });
@@ -78,14 +91,14 @@ export async function buyListing(buyerId: string, listingId: string, qty: number
       throw new OtcError(`Below the minimum purchase (${listing.minQuantity} t)`);
     }
 
-    const total = round2(listing.pricePerUnit * quantity);
+    const total = listing.pricePerUnit * quantity;
     const buyer = await tx.user.findUnique({ where: { id: buyerId } });
     if (!buyer) throw new OtcError("Buyer not found");
-    if (buyer.cashBalance < total) throw new OtcError("Insufficient available cash");
+    if (Number(buyer.cashBalance) < total) throw new OtcError("Insufficient available cash");
 
     // 资金: 买方 -> 卖方
-    await tx.user.update({ where: { id: buyerId }, data: { cashBalance: { decrement: total } } });
-    await tx.user.update({ where: { id: listing.sellerId }, data: { cashBalance: { increment: total } } });
+    await tx.user.update({ where: { id: buyerId }, data: { cashBalance: { decrement: BigInt(total) } } });
+    await tx.user.update({ where: { id: listing.sellerId }, data: { cashBalance: { increment: BigInt(total) } } });
 
     // 持仓: 卖方交付(已冻结) -> 买方
     await tx.holding.update({
@@ -108,8 +121,18 @@ export async function buyListing(buyerId: string, listingId: string, qty: number
     // 参考价
     await tx.asset.update({ where: { id: listing.assetId }, data: { lastPrice: listing.pricePerUnit } });
 
-    return tx.otcDeal.create({
+    const deal = await tx.otcDeal.create({
       data: { listingId, buyerId, quantity, price: listing.pricePerUnit, total },
     });
+
+    await writeLedger(tx, [
+      { userId: buyerId, account: "CASH", delta: -total, reason: "OTC_SETTLE", refType: "DEAL", refId: deal.id },
+      { userId: listing.sellerId, account: "CASH", delta: total, reason: "OTC_SETTLE", refType: "DEAL", refId: deal.id },
+      { userId: listing.sellerId, account: "HOLDING", assetId: listing.assetId, delta: -quantity, reason: "OTC_SETTLE", refType: "DEAL", refId: deal.id },
+      { userId: listing.sellerId, account: "HOLDING_LOCKED", assetId: listing.assetId, delta: -quantity, reason: "OTC_SETTLE", refType: "DEAL", refId: deal.id },
+      { userId: buyerId, account: "HOLDING", assetId: listing.assetId, delta: quantity, reason: "OTC_SETTLE", refType: "DEAL", refId: deal.id },
+    ]);
+
+    return deal;
   });
 }

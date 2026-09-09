@@ -9,12 +9,13 @@ import { LangProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 import { StarrySky } from "@/components/StarrySky";
 import { TrackPageviews } from "@/components/TrackPageviews";
+import { listArticles } from "@/lib/articles";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://carbadia.io"),
-  title: { default: "Carbadia · Carbon Market Simulator", template: "%s · Carbadia" },
+  title: { default: "Carbadia · Carbon Market Simulator & Observatory", template: "%s · Carbadia" },
   description:
-    "A carbon-market simulator with a real order-book engine — practice spot and OTC carbon-credit trading with $100,000 in demo funds. No real money, no real carbon.",
+    "A carbon-market simulator with a real order-book engine, plus an observatory of real market data, retirement tracking, and the Carbadia Observatory journal.",
   openGraph: {
     siteName: "Carbadia",
     type: "website",
@@ -27,6 +28,9 @@ export const metadata: Metadata = {
 const THEME_INIT = `(function(){try{var t=localStorage.getItem("carbadia-theme");if(t!=="light"&&t!=="dark")t="light";document.documentElement.setAttribute("data-theme",t);document.documentElement.style.colorScheme=t;}catch(e){}})()`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // 一篇文章都没有时,文章栏目的所有入口自动隐藏(见 Nav / ObservatoryHome / ObservatoryEntryCard)。
+  // 放第一篇进 content/articles/ 并重新构建,入口自己回来——不需要手动开关。
+  const hasArticles = listArticles().length > 0;
   return (
     <html lang="en" data-theme="light" className="h-full antialiased" suppressHydrationWarning>
       <head>
@@ -40,7 +44,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <PixelTransitionProvider>
                   <StarrySky />
                   <TrackPageviews />
-                  <Nav />
+                  <Nav hasArticles={hasArticles} />
                   <main className="flex-1 w-full max-w-7xl mx-auto px-5 py-8">{children}</main>
                   <Footer />
                 </PixelTransitionProvider>

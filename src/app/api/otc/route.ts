@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { createListing } from "@/lib/otc";
 import { ok, fail, handle, parseBody } from "@/lib/api";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { MAX_PRICE_CENTS } from "@/lib/limits";
 
 export async function GET() {
   try {
@@ -24,7 +25,7 @@ export async function GET() {
 const schema = z.object({
   assetId: z.string().min(1),
   quantity: z.number().int().positive(),
-  pricePerUnit: z.number().positive(),
+  pricePerUnit: z.number().int("Unit price must be an integer amount in cents").positive().max(MAX_PRICE_CENTS),
   minQuantity: z.number().int().positive().optional(),
 });
 

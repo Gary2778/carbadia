@@ -8,6 +8,11 @@ const zhTW: Messages = {
     rating: "CCRC",
     ratingFull: "碳權評級鑑賞家",
     portfolio: "我的資產",
+    zoneExchange: "交易所",
+    zoneObservatory: "觀察",
+    obsOverview: "總覽",
+    obsData: "資料",
+    obsArticles: "文章",
     cash: "可用現金",
     logout: "登出",
     login: "登入",
@@ -17,14 +22,27 @@ const zhTW: Messages = {
   },
 
   home: {
-    kicker: "Carbadia · 碳權交易所 · 模擬盤",
+    kicker: "Carbadia · 碳市場 · 模擬",
     heroLines: ["讓每一噸碳", "都有公允的價格"],
     heroSubtitle:
-      "一個採用真實撮合引擎的碳市場模擬盤 — 以 $100,000 模擬資金練習標準化現貨與 OTC 大宗交易。不涉及真實資金,也不涉及真實碳資產。",
-    startTrading: "開始交易",
-    browseOtc: "瀏覽 OTC 掛牌 →",
+      "兩扇門:一邊是帶真實訂單簿引擎的碳市場模擬盤,一邊是盯著真實市場的觀察站——註冊機構資料、註銷動態,和我們的刊物。",
+    loading: "載入中…",
+    exCardTitle: "模擬交易所",
+    exCardDesc: "用 $100,000 模擬資金練習標準化現貨與 OTC 大宗交易。沒有真錢,也沒有真碳。",
+    exCardCta: "進入交易所 →",
+    exCardMeta: "當前最活躍",
+    obCardTitle: "碳市場觀察",
+    obCardDesc: "真實註冊機構資料、註銷排行、CCRC 評級方法——以及英文刊 Carbadia Observatory。",
+    obCardCta: "進入觀察 →",
+    obCardLatest: "最新一期",
+    obCardNoIssue: "創刊號籌備中",
+    obCardRating: "CCRC 評級方法",
+  },
+
+  exchange: {
     spotMarket: "現貨行情",
     instrumentsMeta: (n: number) => `${n} 檔標的 · 即時模擬行情`,
+    spotEmpty: "尚無掛牌標的。",
     loading: "載入中…",
     thSymbolProject: "代碼 / 專案",
     thStandard: "標準",
@@ -33,6 +51,25 @@ const zhTW: Messages = {
     thTrend24h: "24h 走勢",
     thBidAsk: "委買 / 委賣",
     thVolume24h: "24h 量（噸）",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "全球碳市場的實地筆記與即時資料",
+    latestIssue: "最新一期",
+    readIssue: "閱讀本期 →",
+    noArticles: "創刊號籌備中。",
+    dataCta: "進入資料瀏覽器 →",
+    issueN: (n: number) => `第 ${n} 期`,
+  },
+
+  articles: {
+    title: "文章",
+    subtitle: "Carbadia Observatory 刊物 · 英文版",
+    empty: "尚未發布任何一期。",
+    back: "← 全部文章",
+    issueN: (n: number) => `第 ${n} 期`,
+    disclaimer: "本刊內容僅供資訊與教育用途,不構成任何投資建議。",
   },
 
   market: {
@@ -44,6 +81,9 @@ const zhTW: Messages = {
     vintage: "簽發年份",
     region: "地區",
     registry: "註冊機構",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "K線",
     depth: "深度",
     intervals: { "1m": "1分", "5m": "5分", "1h": "1時", "1d": "1日" },
@@ -77,6 +117,9 @@ const zhTW: Messages = {
     available: "可用",
     max: "全部",
     estTotal: "預估金額",
+    qtyInvalid: "請輸入 ≥1 的整數。",
+    qtyOverAvailable: "超過可用持倉。",
+    depthShort: "訂單簿深度不足以吃下此數量。",
     submitting: "送出中…",
     submitted: "已送出",
     cancel: "刪單",
@@ -282,6 +325,49 @@ const zhTW: Messages = {
     toDark: "切換為深色模式",
   },
 
+  // 过渡约定: 先填英文原文, 待翻译(en.ts 为 source of truth)
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   data: {
     assetNames: {
       "VCS-FOR-2021": "雲南森林經營碳匯專案",
@@ -290,6 +376,8 @@ const zhTW: Messages = {
       "GS-MANG-2022": "印尼紅樹林藍碳復育",
       "VCS-COOK-2020": "肯亞高效爐灶專案",
       "CDM-METH-2019": "巴西垃圾掩埋場沼氣回收",
+      "CEA-SCEN-2026": "全國碳市場配額情境(CEA)",
+      "CCER-SCEN-2026": "CCER 市場指數情境",
     } as Record<string, string>,
     projectTypes: {
       forestry: "林業碳匯",
@@ -297,6 +385,7 @@ const zhTW: Messages = {
       blueCarbon: "藍碳",
       efficiency: "能源效率",
       methane: "甲烷回收",
+      allowanceScenario: "配額情境",
     },
     countries: {
       china: "中國",
@@ -307,6 +396,7 @@ const zhTW: Messages = {
     },
     registries: {
       ccer: "中國 CCER 登記簿",
+      scenario: "情境標的(無真實登記)",
     },
     roles: {
       carbonDeveloper: "碳權開發商",

@@ -8,6 +8,11 @@ const ko: Messages = {
     rating: "CCRC",
     ratingFull: "탄소 크레딧 등급 감정사",
     portfolio: "포트폴리오",
+    zoneExchange: "거래소",
+    zoneObservatory: "관측소",
+    obsOverview: "개요",
+    obsData: "데이터",
+    obsArticles: "기사",
     cash: "가용 현금",
     logout: "로그아웃",
     login: "로그인",
@@ -17,14 +22,27 @@ const ko: Messages = {
   },
 
   home: {
-    kicker: "Carbadia · 탄소 크레딧 거래소 · 데모",
+    kicker: "Carbadia · 탄소 시장 · 데모",
     heroLines: ["탄소 한 톤 한 톤에", "공정한 가격을"],
     heroSubtitle:
-      "실제 호가창 엔진을 갖춘 탄소 시장 시뮬레이터 — $100,000의 데모 자금으로 표준화된 현물 거래와 OTC 대량 거래를 연습해 보세요. 실제 자금도, 실제 탄소도 사용되지 않습니다.",
-    startTrading: "거래 시작",
-    browseOtc: "OTC 둘러보기 →",
+      "두 가지 입구: 실제 호가창 엔진을 갖춘 탄소 시장 시뮬레이터, 그리고 실제 시장을 추적하는 관측소 — 등록소 데이터, 크레딧 폐기 흐름, 그리고 저희 저널까지.",
+    loading: "불러오는 중…",
+    exCardTitle: "모의 거래소",
+    exCardDesc: "$100,000의 데모 자금으로 표준화된 현물 거래와 OTC 대량 거래를 연습해 보세요. 실제 자금도, 실제 탄소도 사용되지 않습니다.",
+    exCardCta: "거래소 입장 →",
+    exCardMeta: "현재 가장 활발함",
+    obCardTitle: "마켓 관측소",
+    obCardDesc: "실제 등록소 데이터, 폐기 순위, CCRC 등급 — 그리고 Carbadia Observatory 저널.",
+    obCardCta: "관측소 입장 →",
+    obCardLatest: "최신호",
+    obCardNoIssue: "창간호 준비 중",
+    obCardRating: "CCRC 등급 방법론",
+  },
+
+  exchange: {
     spotMarket: "현물 시장",
     instrumentsMeta: (n: number) => `종목 ${n}개 · 실시간 데모 데이터`,
+    spotEmpty: "상장된 종목이 아직 없습니다.",
     loading: "불러오는 중…",
     thSymbolProject: "심볼 / 프로젝트",
     thStandard: "표준",
@@ -33,6 +51,25 @@ const ko: Messages = {
     thTrend24h: "24시간 추이",
     thBidAsk: "매수 / 매도 호가",
     thVolume24h: "24시간 거래량 (t)",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "전 세계 탄소 시장의 현장 노트와 실시간 데이터",
+    latestIssue: "최신호",
+    readIssue: "이 호 읽기 →",
+    noArticles: "창간호 준비 중입니다.",
+    dataCta: "데이터 브라우저 열기 →",
+    issueN: (n: number) => `제${n}호`,
+  },
+
+  articles: {
+    title: "기사",
+    subtitle: "Carbadia Observatory 저널 · 영문판",
+    empty: "아직 발행된 호가 없습니다.",
+    back: "← 모든 기사",
+    issueN: (n: number) => `제${n}호`,
+    disclaimer: "본 저널은 정보 제공 및 교육 목적으로만 제공되며, 투자 자문이 아닙니다.",
   },
 
   market: {
@@ -44,6 +81,9 @@ const ko: Messages = {
     vintage: "빈티지",
     region: "지역",
     registry: "레지스트리",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "캔들",
     depth: "깊이",
     intervals: { "1m": "1분", "5m": "5분", "1h": "1시간", "1d": "1일" },
@@ -77,6 +117,9 @@ const ko: Messages = {
     available: "주문 가능",
     max: "최대",
     estTotal: "예상 총액",
+    qtyInvalid: "1 이상의 정수를 입력하세요.",
+    qtyOverAvailable: "사용 가능한 보유량을 초과합니다.",
+    depthShort: "이 수량에 대한 호가창 깊이가 부족합니다.",
     submitting: "제출 중…",
     submitted: "접수됨",
     cancel: "취소",
@@ -282,6 +325,49 @@ const ko: Messages = {
     toDark: "다크 모드로 전환",
   },
 
+  // 过渡约定: 先填英文原文, 待翻译(en.ts 为 source of truth)
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   data: {
     assetNames: {
       "VCS-FOR-2021": "윈난 산림 경영 탄소흡수원",
@@ -290,6 +376,8 @@ const ko: Messages = {
       "GS-MANG-2022": "인도네시아 맹그로브 블루카본 복원",
       "VCS-COOK-2020": "케냐 고효율 쿡스토브",
       "CDM-METH-2019": "브라질 매립가스 포집",
+      "CEA-SCEN-2026": "중국 전국 탄소시장 배출권 시나리오 (CEA)",
+      "CCER-SCEN-2026": "CCER 시장 지수 시나리오",
     } as Record<string, string>,
     projectTypes: {
       forestry: "산림 흡수원",
@@ -297,6 +385,7 @@ const ko: Messages = {
       blueCarbon: "블루카본",
       efficiency: "에너지 효율",
       methane: "메탄 포집",
+      allowanceScenario: "배출권 시나리오",
     },
     countries: {
       china: "중국",
@@ -307,6 +396,7 @@ const ko: Messages = {
     },
     registries: {
       ccer: "중국 CCER 레지스트리",
+      scenario: "시나리오 종목 (실제 등록부 없음)",
     },
     roles: {
       carbonDeveloper: "탄소 개발사",

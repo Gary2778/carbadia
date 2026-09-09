@@ -8,6 +8,11 @@ const ar: Messages = {
     rating: "CCRC",
     ratingFull: "خبير تصنيف أرصدة الكربون",
     portfolio: "المحفظة",
+    zoneExchange: "البورصة",
+    zoneObservatory: "المرصد",
+    obsOverview: "نظرة عامة",
+    obsData: "البيانات",
+    obsArticles: "المقالات",
     cash: "النقد المتاح",
     logout: "تسجيل الخروج",
     login: "تسجيل الدخول",
@@ -17,14 +22,27 @@ const ar: Messages = {
   },
 
   home: {
-    kicker: "Carbadia · بورصة أرصدة الكربون · نسخة تجريبية",
+    kicker: "Carbadia · أسواق الكربون · نسخة تجريبية",
     heroLines: ["سعر عادل", "لكل طن من الكربون"],
     heroSubtitle:
-      "محاكي لسوق الكربون بمحرك دفتر أوامر حقيقي — تدرّب على التداول الفوري القياسي وصفقات الكتل خارج البورصة (OTC) برصيد تجريبي قدره $100,000. لا أموال حقيقية، ولا كربون حقيقي.",
-    startTrading: "ابدأ التداول",
-    browseOtc: "تصفّح OTC →",
+      "طريقتان للدخول: محاكي لسوق الكربون بمحرك دفتر أوامر حقيقي، ومرصد يتتبّع السوق الحقيقية — بيانات السجلات، وعمليات إلغاء الأرصدة، ومجلتنا.",
+    loading: "جارٍ التحميل…",
+    exCardTitle: "بورصة محاكاة",
+    exCardDesc: "تدرّب على التداول الفوري القياسي وصفقات الكتل خارج البورصة (OTC) برصيد تجريبي قدره $100,000. لا أموال حقيقية، ولا كربون حقيقي.",
+    exCardCta: "ادخل إلى البورصة →",
+    exCardMeta: "الأكثر نشاطًا الآن",
+    obCardTitle: "مرصد السوق",
+    obCardDesc: "بيانات سجلات حقيقية، وتصنيفات إلغاء الأرصدة، وتصنيفات CCRC — ومجلة Carbadia Observatory.",
+    obCardCta: "ادخل إلى المرصد →",
+    obCardLatest: "أحدث عدد",
+    obCardNoIssue: "العدد الأول قيد الإعداد",
+    obCardRating: "منهجية تصنيف CCRC",
+  },
+
+  exchange: {
     spotMarket: "السوق الفورية",
     instrumentsMeta: (n: number) => `الأدوات: ${n} · بيانات تجريبية مباشرة`,
+    spotEmpty: "لا توجد أدوات مدرجة بعد.",
     loading: "جارٍ التحميل…",
     thSymbolProject: "الرمز / المشروع",
     thStandard: "المعيار",
@@ -33,6 +51,25 @@ const ar: Messages = {
     thTrend24h: "اتجاه 24س",
     thBidAsk: "شراء / بيع",
     thVolume24h: "حجم 24س (طن)",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "ملاحظات ميدانية وبيانات حية من أسواق الكربون حول العالم",
+    latestIssue: "أحدث عدد",
+    readIssue: "اقرأ هذا العدد →",
+    noArticles: "العدد الأول قيد الإعداد.",
+    dataCta: "افتح متصفح البيانات →",
+    issueN: (n: number) => `العدد ${n}`,
+  },
+
+  articles: {
+    title: "المقالات",
+    subtitle: "مجلة Carbadia Observatory · النسخة الإنجليزية",
+    empty: "لم يُنشر أي عدد بعد.",
+    back: "← كل المقالات",
+    issueN: (n: number) => `العدد ${n}`,
+    disclaimer: "هذه المجلة لأغراض المعلومات والتثقيف فقط. لا شيء هنا يُعد نصيحة استثمارية.",
   },
 
   market: {
@@ -44,6 +81,9 @@ const ar: Messages = {
     vintage: "سنة الإصدار",
     region: "المنطقة",
     registry: "السجل",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "الشموع",
     depth: "العمق",
     intervals: { "1m": "1m", "5m": "5m", "1h": "1h", "1d": "1d" },
@@ -77,6 +117,9 @@ const ar: Messages = {
     available: "المتاح",
     max: "الأقصى",
     estTotal: "الإجمالي التقديري",
+    qtyInvalid: "أدخل عددًا صحيحًا لا يقل عن 1.",
+    qtyOverAvailable: "يتجاوز حيازاتك المتاحة.",
+    depthShort: "عمق دفتر الأوامر غير كافٍ لهذه الكمية.",
     submitting: "جارٍ الإرسال…",
     submitted: "تم الإرسال",
     cancel: "إلغاء",
@@ -282,6 +325,49 @@ const ar: Messages = {
     toDark: "التبديل إلى الوضع الداكن",
   },
 
+  // 过渡约定: 先填英文原文, 待翻译(en.ts 为 source of truth)
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   data: {
     assetNames: {
       "VCS-FOR-2021": "إدارة الغابات لعزل الكربون في يونان",
@@ -290,6 +376,8 @@ const ar: Messages = {
       "GS-MANG-2022": "استعادة الكربون الأزرق للمانغروف في إندونيسيا",
       "VCS-COOK-2020": "مواقد طهي عالية الكفاءة في كينيا",
       "CDM-METH-2019": "احتجاز غاز مدافن النفايات في البرازيل",
+      "CEA-SCEN-2026": "سيناريو حصص سوق الكربون الوطني الصيني (CEA)",
+      "CCER-SCEN-2026": "سيناريو مؤشر سوق CCER",
     } as Record<string, string>,
     projectTypes: {
       forestry: "عزل حرجي",
@@ -297,6 +385,7 @@ const ar: Messages = {
       blueCarbon: "كربون أزرق",
       efficiency: "كفاءة الطاقة",
       methane: "احتجاز الميثان",
+      allowanceScenario: "سيناريو حصص الانبعاثات",
     },
     countries: {
       china: "الصين",
@@ -307,6 +396,7 @@ const ar: Messages = {
     },
     registries: {
       ccer: "سجل CCER الصيني",
+      scenario: "أداة سيناريو (بدون سجل حقيقي)",
     },
     roles: {
       carbonDeveloper: "مطوّر كربون",

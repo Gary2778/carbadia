@@ -1,5 +1,6 @@
-// 16 语文案注册表:全部静态导入(每个文件类型 = typeof en,编译期保证无缺翻译)。
+// 15 语文案注册表:全部静态导入(每个文件类型 = typeof en,编译期保证无缺翻译)。
 // 静态导入而非按需 import():规避 SSR 水合与切换闪烁,总体积对演示盘可接受。
+// 简中(zh)已迁往中文站 carbadia.co,不在本站文案表内。
 import type { Lang } from "./config";
 import en, { type Messages } from "./messages/en";
 import da from "./messages/da";
@@ -15,7 +16,6 @@ import sv from "./messages/sv";
 import ja from "./messages/ja";
 import ko from "./messages/ko";
 import ar from "./messages/ar";
-import zh from "./messages/zh";
 import zhTW from "./messages/zh-TW";
 
 export const MESSAGES: Record<Lang, Messages> = {
@@ -33,7 +33,6 @@ export const MESSAGES: Record<Lang, Messages> = {
   ja,
   ko,
   ar,
-  zh,
   "zh-TW": zhTW,
 };
 

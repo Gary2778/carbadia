@@ -8,6 +8,11 @@ const es: Messages = {
     rating: "CCRC",
     ratingFull: "Carbon Credit Rating Connoisseur",
     portfolio: "Cartera",
+    zoneExchange: "Bolsa",
+    zoneObservatory: "Observatorio",
+    obsOverview: "Resumen",
+    obsData: "Datos",
+    obsArticles: "Artículos",
     cash: "Efectivo disponible",
     logout: "Cerrar sesión",
     login: "Iniciar sesión",
@@ -17,14 +22,27 @@ const es: Messages = {
   },
 
   home: {
-    kicker: "Carbadia · Bolsa de Créditos de Carbono · Demo",
+    kicker: "Carbadia · Mercados de Carbono · Demo",
     heroLines: ["Un precio justo por", "cada tonelada de carbono"],
     heroSubtitle:
-      "Un simulador de mercado de carbono con un motor de libro de órdenes real — practica operaciones spot estandarizadas y en bloque OTC con $100,000 en fondos demo. Sin dinero real, sin carbono real.",
-    startTrading: "Empezar a operar",
-    browseOtc: "Ver OTC →",
+      "Dos vías de entrada: un simulador de mercado de carbono con un motor de libro de órdenes real, y un observatorio que sigue el mercado real — datos de registros, retiros de créditos y nuestra revista.",
+    loading: "Cargando…",
+    exCardTitle: "Bolsa simulada",
+    exCardDesc: "Practica operaciones spot estandarizadas y en bloque OTC con $100,000 en fondos demo. Sin dinero real, sin carbono real.",
+    exCardCta: "Entrar a la bolsa →",
+    exCardMeta: "Más activo ahora",
+    obCardTitle: "Observatorio de mercado",
+    obCardDesc: "Datos reales de registros, rankings de retiros, calificaciones CCRC — y la revista Carbadia Observatory.",
+    obCardCta: "Entrar al observatorio →",
+    obCardLatest: "Última edición",
+    obCardNoIssue: "Primera edición en preparación",
+    obCardRating: "Método de calificación CCRC",
+  },
+
+  exchange: {
     spotMarket: "Mercado spot",
     instrumentsMeta: (n: number) => `${n} instrumentos · datos demo en vivo`,
+    spotEmpty: "Aún no hay instrumentos listados.",
     loading: "Cargando…",
     thSymbolProject: "Símbolo / Proyecto",
     thStandard: "Estándar",
@@ -33,6 +51,25 @@ const es: Messages = {
     thTrend24h: "Tendencia 24h",
     thBidAsk: "Compra / Venta",
     thVolume24h: "Volumen 24h (t)",
+  },
+
+  obs: {
+    title: "Carbadia Observatory",
+    tagline: "Notas de campo y datos en vivo de los mercados de carbono del mundo",
+    latestIssue: "Última edición",
+    readIssue: "Leer esta edición →",
+    noArticles: "Primera edición en preparación.",
+    dataCta: "Abrir el explorador de datos →",
+    issueN: (n: number) => `Edición ${n}`,
+  },
+
+  articles: {
+    title: "Artículos",
+    subtitle: "La revista Carbadia Observatory · edición en inglés",
+    empty: "Aún no se ha publicado ninguna edición.",
+    back: "← Todos los artículos",
+    issueN: (n: number) => `Edición ${n}`,
+    disclaimer: "Esta revista es solo para información y educación. Nada aquí constituye asesoría de inversión.",
   },
 
   market: {
@@ -44,6 +81,9 @@ const es: Messages = {
     vintage: "Vintage",
     region: "Región",
     registry: "Registro",
+    scenarioBadge: "Scenario",
+    scenarioNote:
+      "Scenario market — prices form freely from simulator trading. Not real market data, no link to any real asset.",
     candles: "Velas",
     depth: "Profundidad",
     intervals: { "1m": "1m", "5m": "5m", "1h": "1h", "1d": "1d" },
@@ -77,6 +117,9 @@ const es: Messages = {
     available: "Disponible",
     max: "Máx",
     estTotal: "Total est.",
+    qtyInvalid: "Introduce un número entero de al menos 1.",
+    qtyOverAvailable: "Supera tus tenencias disponibles.",
+    depthShort: "Profundidad del libro insuficiente para esta cantidad.",
     submitting: "Enviando…",
     submitted: "Enviada",
     cancel: "Cancelar",
@@ -282,6 +325,49 @@ const es: Messages = {
     toDark: "Cambiar a modo oscuro",
   },
 
+  // 过渡约定: 先填英文原文, 待翻译(en.ts 为 source of truth)
+  real: {
+    title: "Real Market Data",
+    subtitle:
+      "Public registry data from the global voluntary carbon market — a real-world reference alongside the Carbadia demo.",
+    asOf: (d: string) => `Data as of ${d}`,
+    attributionPre: "Source: ",
+    attributionPost: " — public data from carbon registries.",
+    loading: "Loading…",
+    empty: "No data yet — the first sync has not completed.",
+    statProjects: "Real projects",
+    statIssued: "Credits issued (t)",
+    statRetired: "Credits retired (t)",
+    statRegistries: "Registries",
+    registriesTitle: "By registry",
+    thRegistry: "Registry",
+    thProjects: "Projects",
+    thIssued: "Issued (t)",
+    thRetired: "Retired (t)",
+    trendTitle: "Yearly issuance / retirement",
+    trendIssuance: "Issuance",
+    trendRetirement: "Retirement",
+    browserTitle: "Project browser",
+    filterRegistry: "Registry",
+    filterCountry: "Country",
+    filterCategory: "Category",
+    filterAll: "All",
+    thName: "Project",
+    thBeneficiary: "Beneficiary",
+    thCountry: "Country",
+    thCategory: "Category",
+    thSource: "Source",
+    viewSource: "View ↗",
+    pagePrev: "Prev",
+    pageNext: "Next",
+    pageInfo: (page: number, totalPages: number, total: number) =>
+      `Page ${page} / ${totalPages} · ${total.toLocaleString("en-US")} projects`,
+    retireTitle: "Top retirement beneficiaries",
+    undisclosed: "Undisclosed beneficiaries",
+    footerDisclaimer:
+      "This page presents public registry data for reference only. It is not real-time and constitutes no certification statement and no investment advice.",
+  },
+
   data: {
     assetNames: {
       "VCS-FOR-2021": "Sumidero de carbono por manejo forestal de Yunnan",
@@ -290,6 +376,8 @@ const es: Messages = {
       "GS-MANG-2022": "Restauración de carbono azul en manglares de Indonesia",
       "VCS-COOK-2020": "Cocinas eficientes de Kenia",
       "CDM-METH-2019": "Captura de gas de vertedero en Brasil",
+      "CEA-SCEN-2026": "Escenario de derechos del mercado nacional de carbono de China (CEA)",
+      "CCER-SCEN-2026": "Escenario del índice de mercado CCER",
     } as Record<string, string>,
     projectTypes: {
       forestry: "Sumidero forestal",
@@ -297,6 +385,7 @@ const es: Messages = {
       blueCarbon: "Carbono azul",
       efficiency: "Eficiencia",
       methane: "Captura de metano",
+      allowanceScenario: "Escenario de derechos de emisión",
     },
     countries: {
       china: "China",
@@ -307,6 +396,7 @@ const es: Messages = {
     },
     registries: {
       ccer: "Registro CCER de China",
+      scenario: "Instrumento de escenario (sin registro real)",
     },
     roles: {
       carbonDeveloper: "Desarrollador de carbono",

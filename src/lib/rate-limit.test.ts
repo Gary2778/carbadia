@@ -35,3 +35,49 @@ describe("clientIp", () => {
     expect(clientIp(new Request("http://x"))).toBe("local");
   });
 });
+
+describe("clientIp — 代理密钥信任门(防直连伪造)", () => {
+  function withProxySecret<T>(value: string | undefined, fn: () => T): T {
+    const prev = process.env.PROXY_SECRET;
+    if (value === undefined) delete process.env.PROXY_SECRET;
+    else process.env.PROXY_SECRET = value;
+    try {
+      return fn();
+    } finally {
+      if (prev === undefined) delete process.env.PROXY_SECRET;
+      else process.env.PROXY_SECRET = prev;
+    }
+  }
+
+  it("设了 PROXY_SECRET 且 x-proxy-secret 匹配时,信任 cf-connecting-ip", () => {
+    withProxySecret("s3cret-value", () => {
+      const req = new Request("http://x", {
+        headers: { "x-proxy-secret": "s3cret-value", "cf-connecting-ip": "9.9.9.9" },
+      });
+      expect(clientIp(req)).toBe("9.9.9.9");
+    });
+  });
+
+  it("设了 PROXY_SECRET 但缺少 x-proxy-secret(直连)时,无视伪造的 cf-connecting-ip,返回 untrusted", () => {
+    withProxySecret("s3cret-value", () => {
+      const req = new Request("http://x", { headers: { "cf-connecting-ip": "1.2.3.4" } });
+      expect(clientIp(req)).toBe("untrusted");
+    });
+  });
+
+  it("设了 PROXY_SECRET 但 x-proxy-secret 不匹配时,返回 untrusted", () => {
+    withProxySecret("s3cret-value", () => {
+      const req = new Request("http://x", {
+        headers: { "x-proxy-secret": "wrong", "cf-connecting-ip": "1.2.3.4" },
+      });
+      expect(clientIp(req)).toBe("untrusted");
+    });
+  });
+
+  it("未设 PROXY_SECRET 时沿用旧行为(信任 cf-connecting-ip,不破坏本地/灰度前部署)", () => {
+    withProxySecret(undefined, () => {
+      const req = new Request("http://x", { headers: { "cf-connecting-ip": "5.6.7.8" } });
+      expect(clientIp(req)).toBe("5.6.7.8");
+    });
+  });
+});

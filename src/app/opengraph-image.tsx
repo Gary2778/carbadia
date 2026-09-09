@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Carbadia — carbon market simulator";
+export const alt = "Carbadia — carbon market simulator & observatory";
 
 export default function OgImage() {
   return new ImageResponse(
@@ -29,7 +29,7 @@ export default function OgImage() {
           A fair price for every tonne of carbon
         </div>
         <div style={{ display: "flex", fontSize: 34, color: "#b8c4bb", marginTop: 28 }}>
-          Carbon-market simulator · real order-book engine · $100,000 demo funds
+          Carbon-market simulator · real order-book engine · plus a market observatory with real data & retirement tracking
         </div>
       </div>
     ),
